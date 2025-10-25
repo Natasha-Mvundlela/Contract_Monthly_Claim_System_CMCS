@@ -162,6 +162,8 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                                         claims.Calculated_Amount, claims.Supporting_Documents);
 
 
+                    TempData["SuccessMessage"] = "Claim submitted successfully!";
+
                     // Redirect based on role
                     var userRole = HttpContext.Session.GetString("UserRole");
                     if (userRole?.ToLower() == "lecturer")
@@ -173,7 +175,6 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                         return RedirectToAction("Approval");
                     }
 
-                    TempData["SuccessMessage"] = "Claim submitted successfully!";
                 }
                 catch (Exception ex)
                 {
