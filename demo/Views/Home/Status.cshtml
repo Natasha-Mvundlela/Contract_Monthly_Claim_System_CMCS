@@ -1,0 +1,129 @@
+﻿@model List<Contract_Monthly_Claim_System_CMCS.Models.claim>
+@{
+    ViewData["Title"] = "Claim Status";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Status - Contract Monthly Claim System</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navigation">
+        <h3>Contract Monthly Claim System</h3>
+        <div class="nav-links">
+            <a href="@Url.Action("Index", "Home")">Home</a>
+            <a href="@Url.Action("Claim", "Home")">Claim</a>
+            <a href="@Url.Action("Status", "Home")" class="active">Status</a>
+            <a href="@Url.Action("Index", "Home")">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="status-container">
+            <div class="status-header">
+                <h1>Your Claim Status</h1>
+                <p>Track the progress of your submitted claims</p>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            @if (!Model.Any())
+            {
+                <div class="no-claims">
+                    <h3>No Claims Submitted</h3>
+                    <p>You haven't submitted any claims yet. <a href="@Url.Action("Claim", "Home")">Submit your first claim</a> to get started.</p>
+                </div>
+            }
+            else
+            {
+                <div class="claims-list">
+                    @foreach (var claim in Model)
+                    {
+                        <div class="status-card">
+                            <div class="status-card-header">
+                                <div class="claim-info">
+                                    <h3>Claim #@claim.ClaimID - @claim.Module</h3>
+                                    <span class="claim-date">Submitted: @claim.SubmittedDate.ToString("dd MMM yyyy HH:mm")</span>
+                                </div>
+                                <div class="status-indicator">
+                                    @if (claim.Status == "Approved")
+                                    {
+                                        <span class="status-badge status-approved">@claim.Status</span>
+                                        <span class="processed-date">Approved on: @claim.ProcessedDate?.ToString("dd MMM yyyy")</span>
+                                    }
+                                    else if (claim.Status == "Rejected")
+                                    {
+                                        <span class="status-badge status-rejected">@claim.Status</span>
+                                        <span class="processed-date">Rejected on: @claim.ProcessedDate?.ToString("dd MMM yyyy")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-pending">@claim.Status</span>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 50%"></div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="status-details">
+                                <div class="detail-grid">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Faculty:</span>
+                                        <span class="detail-value">@claim.Faculty</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Hours Worked:</span>
+                                        <span class="detail-value">@claim.Hours_Worked hours</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Hourly Rate:</span>
+                                        <span class="detail-value">R @claim.Hourly_Rate.ToString("F2")</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Total Amount:</span>
+                                        <span class="detail-value total-amount">R @claim.Calculated_Amount.ToString("F2")</span>
+                                    </div>
+                                </div>
+
+                                @if (claim.Status == "Rejected" && !string.IsNullOrEmpty(claim.RejectionReason))
+                                {
+                                    <div class="rejection-reason">
+                                        <strong>Rejection Reason:</strong>
+                                        <p>@claim.RejectionReason</p>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(claim.Supporting_Documents))
+                                {
+                                    <div class="documents-section">
+                                        <strong>Supporting Documents:</strong>
+                                        <p>@claim.Supporting_Documents</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Contract Monthly Claim System</p>
+        </div>
+    </footer>
+</body>
+</html>

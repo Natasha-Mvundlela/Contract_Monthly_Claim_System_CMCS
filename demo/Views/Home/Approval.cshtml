@@ -1,0 +1,134 @@
+﻿@model List<Contract_Monthly_Claim_System_CMCS.Models.claim>
+@{
+    ViewData["Title"] = "Claim Approval";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Approval - Contract Monthly Claim System</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navigation">
+        <h3>Contract Monthly Claim System</h3>
+        <div class="nav-links">
+            <a href="@Url.Action("Approval", "Home")" class="active">Approve Claims</a>
+            <a href="@Url.Action("Status", "Home")">Status</a>
+            <a href="@Url.Action("Logout", "Home")">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="approval-container">
+            <div class="approval-header">
+                <h1>Claim Approval Dashboard</h1>
+                <p>Review and process pending claims from lecturers</p>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-error">
+                    @TempData["ErrorMessage"]
+                </div>
+            }
+
+            @if (!Model.Any())
+            {
+                <div class="no-claims">
+                    <h3>No Pending Claims</h3>
+                    <p>There are currently no claims waiting for approval.</p>
+                </div>
+            }
+            else
+            {
+                <div class="claims-grid">
+                    @foreach (var claim in Model)
+                    {
+                        <div class="claim-card">
+                            <div class="claim-header">
+                                <h3>Claim #@claim.ClaimID</h3>
+                                <span class="status-badge status-pending">@claim.Status</span>
+                            </div>
+
+                            <div class="claim-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Lecturer Email:</span>
+                                    <span class="detail-value">@claim.Email_Address</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Claim Date:</span>
+                                    <span class="detail-value">@claim.Claim_Date.ToString("dd MMM yyyy")</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Faculty:</span>
+                                    <span class="detail-value">@claim.Faculty</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Module:</span>
+                                    <span class="detail-value">@claim.Module</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Hours Worked:</span>
+                                    <span class="detail-value">@claim.Hours_Worked hours</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Hourly Rate:</span>
+                                    <span class="detail-value">R @claim.Hourly_Rate.ToString("F2")</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Total Amount:</span>
+                                    <span class="detail-value total-amount">R @claim.Calculated_Amount.ToString("F2")</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(claim.Supporting_Documents))
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">Documents:</span>
+                                        <span class="detail-value">@claim.Supporting_Documents</span>
+                                    </div>
+                                }
+                                <div class="detail-row">
+                                    <span class="detail-label">Submitted:</span>
+                                    <span class="detail-value">@claim.SubmittedDate.ToString("dd MMM yyyy HH:mm")</span>
+                                </div>
+                            </div>
+
+                            <div class="claim-actions">
+                                <form asp-action="ApproveClaim" method="post" class="action-form">
+                                    <input type="hidden" name="claimId" value="@claim.ClaimID" />
+                                    <button type="submit" class="btn btn-approve">Approve Claim</button>
+                                </form>
+
+                                <form asp-action="RejectClaim" method="post" class="action-form">
+                                    <input type="hidden" name="claimId" value="@claim.ClaimID" />
+                                    <div class="reject-section">
+                                        <input type="text" name="reason" placeholder="Reason for rejection" class="form-control" required />
+                                        <button type="submit" class="btn btn-reject">Reject Claim</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Contract Monthly Claim System</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,109 @@
+﻿@model Contract_Monthly_Claim_System_CMCS.Models.register
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.PageTitle</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navigation">
+        <div class="nav-brand">Contract Monthly Claim System</div>
+        <div class="nav-links">
+            <a href="@Url.Action("Index", "Home")" class="active">Home</a>
+            <a href="@Url.Action("Login", "Home")">Login</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Welcome Section -->
+        <div class="card register-card">
+            <h1>@ViewBag.WelcomeMessage</h1>
+            <p>@ViewBag.SystemDescription</p>
+            <p>The Contract Monthly Claim System stands as a testament to innovation in administrative processes, offering a glimpse into the future of streamlined claim management.</p>
+            <p>With its user-centric design and seamless integration of features, the system aims to revolutionise the way claims are processed and approved.</p>
+        </div>
+
+        <!-- Register Form -->
+        <div class="auth-container" id="registerForm">
+            <div class="auth-header">
+                <h2>Create New Account</h2>
+                <p>Register to submit monthly claims</p>
+            </div>
+
+            @if (ViewBag.SuccessMessage != null)
+            {
+                <div class="alert alert-success">
+                    @ViewBag.SuccessMessage
+                </div>
+            }
+
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <div class="alert alert-error">
+                    @ViewBag.ErrorMessage
+                </div>
+            }
+
+            @if (ViewBag.ValidationErrors != null)
+            {
+                <div class="alert alert-error">
+                    <ul>
+                        @foreach (var error in ViewBag.ValidationErrors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form asp-action="Index" method="post">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" asp-for="Full_Name" id="name" class="form-control" placeholder="Enter your full name">
+                    <span asp-validation-for="Full_Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-email">Email Address</label>
+                    <input type="email" asp-for="Email_Address" id="reg-email" class="form-control" placeholder="your.email@example.com">
+                    <span asp-validation-for="Email_Address" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" asp-for="Password" id="reg-password" class="form-control" placeholder="Create a password (min. 6 characters)">
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select asp-for="Role" id="role" class="form-control">
+                        <option value="">Select your role</option>
+                        <option value="lecturer">Lecturer</option>
+                        <option value="pc">Program Coordinator</option>
+                        <option value="admin">Academic Manager</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-block">Register</button>
+
+                <div class="auth-option">
+                    <p>Already have an account? <a href="@Url.Action("Login", "Home")">Login here</a></p>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Contract Monthly Claim System</p>
+        </div>
+    </footer>
+
+</body>
+</html>

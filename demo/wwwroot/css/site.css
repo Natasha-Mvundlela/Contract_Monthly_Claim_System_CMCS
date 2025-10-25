@@ -1,0 +1,903 @@
+/*  RESET & BASE STYLES */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #1d7e72;
+    --primary-light: #71c7b2;
+    --primary-dark: #1c6e64;
+    --accent-color: #8cb9a0;
+    --background: #f5f5f5;
+    --surface: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #555555;
+    --border-color: #e0e0e0;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --success: #4caf50;
+    --warning: #ff9800;
+    --error: #f44336;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background);
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/*  NAVIGATION */
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--primary-color);
+    padding: 1rem 2rem;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+    .navigation h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.navigation a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    position: relative;
+}
+
+    .navigation a:hover {
+        color: var(--accent-color);
+    }
+
+    .navigation a.active {
+        color: var(--accent-color);
+    }
+
+        .navigation a.active::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--accent-color);
+        }
+
+    .navigation a::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: 0;
+        left: 0;
+        background-color: var(--accent-color);
+        transition: width 0.3s ease;
+    }
+
+    .navigation a:hover::after {
+        width: 100%;
+    }
+
+/* MAIN CONTENT CONTAINER */
+.container {
+    flex: 1;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/*  CLAIM FORM */
+.claim {
+    background-color: var(--surface);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border-left: 5px solid var(--primary-color);
+}
+
+.claim-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+    .claim-header h1 {
+        color: var(--primary-dark);
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .claim-header p {
+        color: var(--text-secondary);
+    }
+
+/* FORM ELEMENTS */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(29, 126, 114, 0.1);
+    }
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d7e72' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* FILE UPLOAD */
+.file-upload {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.file-upload-input {
+    position: absolute;
+    left: -9999px;
+}
+
+.file-upload-label {
+    display: block;
+    padding: 1rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+    .file-upload-label:hover {
+        border-color: var(--primary-color);
+        background-color: rgba(29, 126, 114, 0.05);
+    }
+
+    .file-upload-label::before {
+        content: '??';
+        margin-right: 0.5rem;
+    }
+
+.file-list {
+    margin-top: 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+    .file-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background-color: rgba(29, 126, 114, 0.05);
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-list button {
+        background: none;
+        border: none;
+        color: var(--error);
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+/* CALCULATION SUMMARY */
+.calculation-summary {
+    background-color: rgba(29, 126, 114, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+    .calculation-summary h3 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+    .summary-row:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: var(--primary-dark);
+    }
+
+/* BUTTONS */
+.btn {
+    display: inline-block;
+    padding: 0.875rem 1.75rem;
+    background-color: var(--primary-dark);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+    .btn:hover {
+        background-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* FORM LAYOUT  */
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-col {
+    flex: 1;
+}
+
+/* SYSTEM INFO */
+.system-info {
+    background-color: var(--surface);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+    .system-info h3 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+    }
+
+    .system-info ul {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .system-info li {
+        margin-bottom: 0.5rem;
+    }
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .navigation {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+        .navigation h3 {
+            margin-bottom: 0.75rem;
+        }
+
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    .claim {
+        padding: 1.5rem;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+/* DASHBOARD STYLES */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    border-left: 4px solid var(--primary-color);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-dark);
+    margin: 0.5rem 0;
+}
+
+.claims-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .claims-table th {
+        text-align: left;
+        padding: 1rem;
+        border-bottom: 2px solid var(--primary-light);
+        background: var(--background);
+    }
+
+    .claims-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+.no-claims {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* FOOTER */
+footer {
+    background-color: var(--primary-dark);
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: auto;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+    .footer-content p {
+        margin-bottom: 0;
+        color: white;
+    }
+
+/*  ANIMATIONS */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.claim {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.form-group {
+    animation: fadeIn 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+    .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    .form-group:nth-child(5) {
+        animation-delay: 0.5s;
+    }
+
+    .form-group:nth-child(6) {
+        animation-delay: 0.6s;
+    }
+
+.btn {
+    animation-delay: 0.7s;
+}
+/* Status Styles */
+.status-container, .approval-container {
+    background-color: var(--surface);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.status-header, .approval-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+    .status-header h1, .approval-header h1 {
+        color: var(--primary-dark);
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+/* Status Badges */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-approved {
+    background-color: #d1edff;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Claim Cards */
+.claim-card, .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.claim-card-header, .status-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+    .claim-info h3, .status-card-header h3 {
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+
+.claim-date {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Progress Bar */
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Detail Grids */
+.detail-grid, .claim-details {
+    display: grid;
+    gap: 1rem;
+}
+
+.detail-row, .detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+    .detail-row:last-child, .detail-item:last-child {
+        border-bottom: none;
+    }
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.detail-value {
+    color: var(--text-secondary);
+}
+
+.total-amount {
+    font-weight: bold;
+    color: var(--primary-dark);
+    font-size: 1.1rem;
+}
+
+/* Claim Actions */
+.claim-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.action-form {
+    flex: 1;
+}
+
+.reject-section {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-approve {
+    background-color: var(--success);
+    width: 100%;
+}
+
+    .btn-approve:hover {
+        background-color: #45a049;
+    }
+
+.btn-reject {
+    background-color: var(--error);
+    white-space: nowrap;
+}
+
+    .btn-reject:hover {
+        background-color: #da190b;
+    }
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    color: white;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification-success {
+    background-color: var(--success);
+}
+
+.notification-error {
+    background-color: var(--error);
+}
+
+.notification-info {
+    background-color: var(--primary-color);
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-left: 1rem;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* File Upload Enhancements */
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: rgba(29, 126, 114, 0.05);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.file-name {
+    font-size: 0.875rem;
+}
+
+.file-remove {
+    background: none;
+    border: none;
+    color: var(--error);
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0.25rem;
+}
+
+    .file-remove:hover {
+        color: #da190b;
+    }
+
+/* Rejection Reason */
+.rejection-reason {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--error);
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 4px;
+}
+
+    .rejection-reason strong {
+        color: var(--error);
+    }
+
+/* Documents Section */
+.documents-section {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--primary-color);
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 4px;
+}
+
+/* Claims Grid for Approval */
+.claims-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .claim-actions {
+        flex-direction: column;
+    }
+
+    .reject-section {
+        flex-direction: column;
+    }
+
+    .claim-card-header, .status-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .notification {
+        left: 20px;
+        right: 20px;
+        min-width: auto;
+    }
+
+    .detail-row, .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+/* Dashboard Styles */
+.dashboard-container {
+    background-color: var(--surface);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.dashboard-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+    .dashboard-header h1 {
+        color: var(--primary-dark);
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-info h3 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-info p {
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Quick Actions */
+.quick-actions {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+    .quick-actions h2 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+    }
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+}
+
+.btn-secondary {
+    background-color: var(--text-secondary);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-secondary:hover {
+    background-color: var(--text-primary);
+}
+
+/* Recent Claims */
+.recent-claims {
+    margin-top: 2rem;
+}
+
+    .recent-claims h2 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+    }
+
+.claim-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+    .claim-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+.claim-info h4 {
+    color: var(--primary-dark);
+    margin-bottom: 0.5rem;
+}
+
+.claim-info p {
+    color: var(--text-secondary);
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+/* Navigation improvements */
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.navigation a {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+    .navigation a:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .navigation a.active {
+        background-color: rgba(255, 255, 255, 0.2);
+    }

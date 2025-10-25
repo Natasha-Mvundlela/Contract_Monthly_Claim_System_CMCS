@@ -1,0 +1,176 @@
+﻿@model Contract_Monthly_Claim_System_CMCS.Models.claim
+@{
+    ViewData["Title"] = "Claim";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.PageTitle</title>
+    <link rel="stylesheet" href="~/css/style.css" />
+    <script src="~/js/site.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navigation">
+        <h3>Contract Monthly Claim System</h3>
+        <div class="nav-links">
+            <a href="@Url.Action("Index", "Home")">Home</a>
+            <a href="@Url.Action("Claim", "Home")" class="active">Claim</a>
+            <a href="@Url.Action("Status", "Home")">Status</a>
+            <a href="@Url.Action("Index", "Home")">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="claim">
+            <div class="claim-header">
+                <h1>Submit Your Monthly Claim</h1>
+                <p>Fill out the form below to submit your claim for processing</p>
+            </div>
+
+            @if (ViewBag.SuccessMessage != null)
+            {
+                <div class="alert alert-success">
+                    @ViewBag.SuccessMessage
+                </div>
+            }
+
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <div class="alert alert-error">
+                    @ViewBag.ErrorMessage
+                </div>
+            }
+
+            @if (ViewBag.ValidationErrors != null)
+            {
+                <div class="alert alert-error">
+                    <ul>
+                        @foreach (var error in ViewBag.ValidationErrors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <div class="system-info">
+                <h3>Claim Submission Guidelines</h3>
+                <ul>
+                    <li>All claims require supporting documentation (timesheets, attendance records, etc.)</li>
+                    <li>Claims will be reviewed by your Programme Coordinator before approval</li>
+                    <li>Payment will be processed within 14 working days after approval</li>
+                    <li>Maximum file size: 5MB per file</li>
+                    <li>Allowed file types: PDF, DOCX, XLSX</li>
+                </ul>
+            </div>
+
+            <form asp-action="Claim" method="post" id="claimForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" asp-for="Email_Address" id="email" class="form-control" placeholder="your.email@example.com">
+                            <span asp-validation-for="Email_Address" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="claimDate">Claim Date</label>
+                            <input type="date" asp-for="Claim_Date" id="claimDate" class="form-control" value="@ViewBag.CurrentDate">
+                            <span asp-validation-for="Claim_Date" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="faculty">Faculty</label>
+                            <select asp-for="Faculty" id="faculty" class="form-control">
+                                <option value="">Select a faculty</option>
+                                @foreach (var faculty in ViewBag.Faculties)
+                                {
+                                    <option value="@faculty">@faculty</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Faculty" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="module">Module</label>
+                            <select asp-for="Module" id="module" class="form-control">
+                                <option value="">Select a module</option>
+                                @foreach (var module in ViewBag.Modules)
+                                {
+                                    <option value="@module">@module</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Module" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="rate">Hourly Rate (R)</label>
+                            <input type="number" asp-for="Hourly_Rate" id="rate" class="form-control" min="0" step="0.01" placeholder="0.00" oninput="calculateTotal()">
+                            <span asp-validation-for="Hourly_Rate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="hoursWorked">Hours Worked</label>
+                            <input type="number" asp-for="Hours_Worked" id="hoursWorked" class="form-control" min="0" step="0.5" placeholder="0.0" oninput="calculateTotal()">
+                            <span asp-validation-for="Hours_Worked" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calculation-summary">
+                    <h3>Calculation Summary</h3>
+                    <div class="summary-row">
+                        <span>Hourly Rate:</span>
+                        <span id="rateDisplay">R 0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Hours Worked:</span>
+                        <span id="hoursDisplay">0.0 hours</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total Amount:</span>
+                        <span id="totalDisplay">R 0.00</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Supporting Documents</label>
+                    <div class="file-upload">
+                        <input type="file" id="uploadFile" class="file-upload-input" accept=".pdf,.docx,.xlsx">
+                        <label for="uploadFile" class="file-upload-label">Click to upload files (PDF, DOCX, XLSX - Max 5MB each)</label>
+                        <ul class="file-list" id="fileList"></ul>
+                    </div>
+                    <input type="hidden" asp-for="Supporting_Documents" id="supportingDocuments" />
+                </div>
+
+                <button type="submit" class="btn btn-block">Submit Claim</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025</p>
+        </div>
+    </footer>
+
+</body>
+</html>

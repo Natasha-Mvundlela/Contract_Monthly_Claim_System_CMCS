@@ -1,0 +1,133 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Contract Monthly Claim System</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navigation">
+        <h3>Contract Monthly Claim System</h3>
+        <div class="nav-links">
+            <a href="@Url.Action("Dashboard", "Home")" class="active">Dashboard</a>
+            <a href="@Url.Action("Claim", "Home")">Submit Claim</a>
+            <a href="@Url.Action("Status", "Home")">Claim Status</a>
+            <a href="@Url.Action("Logout", "Home")">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1>Lecturer Dashboard</h1>
+                <p>Welcome back! Here's your claim overview.</p>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>@ViewBag.TotalClaims</h3>
+                        <p>Total Claims</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>@ViewBag.PendingClaims</h3>
+                        <p>Pending</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>@ViewBag.ApprovedClaims</h3>
+                        <p>Approved</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>
+                            R @{
+                            var recentClaims = ViewBag.RecentClaims as List<Contract_Monthly_Claim_System_CMCS.Models.claim>;
+                            var totalApproved = recentClaims != null
+                            ? recentClaims.Where(c => c.Status == "Approved").Sum(c => c.Calculated_Amount)
+                            : 0m;
+                                                        }
+                            @totalApproved.ToString("F2")
+                        </h3>
+                        <p>Total Approved</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="action-buttons">
+                    <a href="@Url.Action("Claim", "Home")" class="btn btn-primary">Submit New Claim</a>
+                    <a href="@Url.Action("Status", "Home")" class="btn btn-secondary">View All Claims</a>
+                </div>
+            </div>
+
+            <!-- Recent Claims -->
+            <div class="recent-claims">
+                <h2>Recent Claims</h2>
+                @if (ViewBag.RecentClaims != null && ((List <Contract_Monthly_Claim_System_CMCS.Models.claim >)ViewBag.RecentClaims).Any())
+                {
+                    <div class="claims-list">
+                        @foreach (var claim in (List < Contract_Monthly_Claim_System_CMCS.Models.claim >)ViewBag.RecentClaims)
+                        {
+                            <div class="claim-item">
+                                <div class="claim-info">
+                                    <h4>@claim.Module - @claim.Faculty</h4>
+                                    <p>Submitted: @claim.SubmittedDate.ToString("dd MMM yyyy")</p>
+                                    <p>Amount: R @claim.Calculated_Amount.ToString("F2")</p>
+                                </div>
+                                <div class="claim-status">
+                                    @if (claim.Status == "Approved")
+                                    {
+                                        <span class="status-badge status-approved">@claim.Status</span>
+                                    }
+                                    else if (claim.Status == "Rejected")
+                                    {
+                                        <span class="status-badge status-rejected">@claim.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-pending">@claim.Status</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-claims">
+                        <p>No claims submitted yet. <a href="@Url.Action("Claim", "Home")">Submit your first claim</a> to get started.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Contract Monthly Claim System</p>
+        </div>
+    </footer>
+</body>
+</html>
