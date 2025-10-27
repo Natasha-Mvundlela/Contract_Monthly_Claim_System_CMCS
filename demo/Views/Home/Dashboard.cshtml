@@ -58,21 +58,18 @@
                         <p>Approved</p>
                     </div>
                 </div>
+                <!-- Approved section -->
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>
                             R @{
-                            var recentClaims = ViewBag.RecentClaims as List<Contract_Monthly_Claim_System_CMCS.Models.claim>;
-                            var totalApproved = recentClaims != null
-                            ? recentClaims.Where(c => c.Status == "Approved").Sum(c => c.Calculated_Amount)
-                            : 0m;
+                            var totalApproved = ViewBag.TotalApprovedAmount ?? 0m;
                                                         }
                             @totalApproved.ToString("F2")
                         </h3>
                         <p>Total Approved</p>
                     </div>
                 </div>
-            </div>
 
             <!-- Quick Actions -->
             <div class="quick-actions">
