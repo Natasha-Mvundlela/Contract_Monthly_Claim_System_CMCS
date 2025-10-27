@@ -226,6 +226,8 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         public IActionResult Approval()
         {
             var userRole = HttpContext.Session.GetString("UserRole");
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+
             if (userRole != "pc" && userRole != "admin")
             {
                 TempData["ErrorMessage"] = "Access denied. You do not have permission to view this page.";
@@ -234,12 +236,16 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
             created_queries queries = new created_queries();
             var pendingClaims = queries.GetPendingClaims();
+
+            // Debug information
+            Console.WriteLine($"Found {pendingClaims.Count} pending claims for approval");
+
             return View(pendingClaims);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ApproveClaim(int claimId)
+        public IActionResult Approval(int claimId)
         {
             try
             {

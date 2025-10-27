@@ -168,60 +168,66 @@ textarea.form-control {
     resize: vertical;
 }
 
-/* FILE UPLOAD */
+/* File Upload Styles */
 .file-upload {
-    position: relative;
-    margin-bottom: 1.5rem;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.3s ease;
 }
 
+    .file-upload:hover {
+        border-color: #007bff;
+    }
+
 .file-upload-input {
-    position: absolute;
-    left: -9999px;
+    display: none;
 }
 
 .file-upload-label {
-    display: block;
-    padding: 1rem;
-    border: 2px dashed var(--border-color);
-    border-radius: 6px;
-    text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    color: #007bff;
+    font-weight: 500;
 }
-
-    .file-upload-label:hover {
-        border-color: var(--primary-color);
-        background-color: rgba(29, 126, 114, 0.05);
-    }
-
-    .file-upload-label::before {
-        content: '??';
-        margin-right: 0.5rem;
-    }
 
 .file-list {
-    margin-top: 1rem;
-    padding: 0;
-    list-style: none;
+    margin-top: 10px;
 }
 
-    .file-list li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem;
-        background-color: rgba(29, 126, 114, 0.05);
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
-    }
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
 
-    .file-list button {
-        background: none;
-        border: none;
-        color: var(--error);
-        cursor: pointer;
-        font-weight: bold;
-    }
+/* Status Badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background: #d1edff;
+    color: #0c5460;
+}
+
+.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
 
 /* CALCULATION SUMMARY */
 .calculation-summary {
