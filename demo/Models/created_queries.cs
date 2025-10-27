@@ -260,7 +260,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
                 {
                     connect.Open();
-                    string query = @"INSERT INTO Claims ('" +Email_Address + "', '" +Claim_Date+ "', '" + Faculty+ "', '" + Module + "' , '"+ Hours_Worked+ "' , '" + Hourly_Rate + "' , '" + Calculated_Amount + "' , '" + Supporting_Documents + "' )";
+                    string query = @"INSERT INTO Claims ('" +Email_Address + "', '" +Claim_Date+ "', '" + Faculty+ "', '" + Module + "' , '"+ Hours_Worked+ "' , '" + Hourly_Rate + "' , '" + Calculated_Amount + "' , '" + Supporting_Documents + "', 'Pending' )";
                     using (SqlCommand insert = new SqlCommand(query, connect))
                     {
                         insert.Parameters.AddWithValue("@Email", Email_Address);

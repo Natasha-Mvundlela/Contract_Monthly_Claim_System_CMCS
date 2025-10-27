@@ -1,4 +1,4 @@
-﻿
+﻿@model Contract_Monthly_Claim_System_CMCS.Models.claim
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -17,7 +17,7 @@
         <h3>Contract Monthly Claim System</h3>
         <div class="nav-links">
             <a href="@Url.Action("Dashboard", "Home")" class="active">Dashboard</a>
-            <a href="@Url.Action("Claim", "Home")">Submit Claim</a>
+            <a href="@Url.Action("Claim", "Home")">Claim</a>
             <a href="@Url.Action("Status", "Home")">Claim Status</a>
             <a href="@Url.Action("Logout", "Home")">Logout</a>
         </div>

@@ -107,24 +107,6 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             return View(user);
         }
 
-        [HttpGet]
-        public IActionResult Claim()
-        {
-            var userEmail = HttpContext.Session.GetString("UserEmail");
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                TempData["ErrorMessage"] = "Please login to submit a claim.";
-                return RedirectToAction("Login");
-            }
-
-            ViewBag.Faculties = new List<string> { "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting" };
-            ViewBag.Modules = new List<string> { "Programming", "Database", "Information Security", "Web Development", "Software Engineering", "Network Fundamentals" };
-            ViewBag.CurrentDate = DateTime.Now.ToString("yyyy-MM-dd");
-            ViewBag.UserEmail = userEmail;
-
-            return View(new claim { Email_Address = userEmail });
-        }
-
         [HttpPost]
         public IActionResult Claim(claim claims)
         {
@@ -155,25 +137,41 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                     // Calculate amount
                     claims.Calculated_Amount = claims.Hours_Worked * claims.Hourly_Rate;
 
+                    // Handle file upload
+                    var uploadedFiles = new List<string>();
+                    var httpRequest = HttpContext.Request;
+
+                    if (httpRequest.Form.Files.Count > 0)
+                    {
+                        foreach (var file in httpRequest.Form.Files)
+                        {
+                            if (file.Length > 0)
+                            {
+                                var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", fileName);
+
+                                // Ensure upload directory exists
+                                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+
+                                using (var stream = new FileStream(filePath, FileMode.Create))
+                                {
+                                    file.CopyTo(stream);
+                                }
+                                uploadedFiles.Add(fileName);
+                            }
+                        }
+                        claims.Supporting_Documents = string.Join(",", uploadedFiles);
+                    }
+
                     // Save claim to database
                     created_queries saveClaim = new created_queries();
                     saveClaim.store_claim(claims.Email_Address, claims.Claim_Date, claims.Faculty,
                                         claims.Module, claims.Hours_Worked, claims.Hourly_Rate,
                                         claims.Calculated_Amount, claims.Supporting_Documents);
 
-
                     TempData["SuccessMessage"] = "Claim submitted successfully!";
 
-                    // Redirect based on role
-                    var userRole = HttpContext.Session.GetString("UserRole");
-                    if (userRole?.ToLower() == "lecturer")
-                    {
-                        return RedirectToAction("Status");
-                    }
-                    else
-                    {
-                        return RedirectToAction("Approval");
-                    }
+                    return RedirectToAction("Dashboard");
 
                 }
                 catch (Exception ex)
@@ -196,14 +194,22 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Get recent claims for the dashboard
+            // Get claims for the dashboard
             created_queries queries = new created_queries();
             var userClaims = queries.GetUserClaims(userEmail);
 
+            //data
             ViewBag.RecentClaims = userClaims.Take(5).ToList();
             ViewBag.TotalClaims = userClaims.Count;
             ViewBag.PendingClaims = userClaims.Count(c => c.Status == "Pending");
+            ViewBag.ApprovedClaims = userClaims.Count(c => c.Status == "Pre-Approved");
             ViewBag.ApprovedClaims = userClaims.Count(c => c.Status == "Approved");
+
+            // Calculate total approved amount
+            var totalApproved = userClaims
+                .Where(c => c.Status == "Approved")
+                .Sum(c => c.Calculated_Amount);
+            ViewBag.TotalApprovedAmount = totalApproved;
 
             return View();
         }
@@ -214,7 +220,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail))
             {
-                return RedirectToAction("Login");
+                return RedirectToAction("Status");
             }
 
             created_queries queries = new created_queries();
@@ -245,7 +251,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Approval(int claimId)
+        public IActionResult ApprovedClaim(int claimId)
         {
             try
             {
