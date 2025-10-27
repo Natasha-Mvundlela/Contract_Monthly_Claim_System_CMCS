@@ -150,15 +150,17 @@
                         <span id="totalDisplay">R 0.00</span>
                     </div>
                 </div>
-
+                <!-- file upload section -->
                 <div class="form-group">
                     <label>Supporting Documents</label>
                     <div class="file-upload">
-                        <input type="file" id="uploadFile" class="file-upload-input" accept=".pdf,.docx,.xlsx">
-                        <label for="uploadFile" class="file-upload-label">Click to upload files (PDF, DOCX, XLSX - Max 5MB each)</label>
-                        <ul class="file-list" id="fileList"></ul>
+                        <input type="file" name="supportingFiles" id="uploadFile" class="file-upload-input"
+                               accept=".pdf,.docx,.xlsx" multiple>
+                        <label for="uploadFile" class="file-upload-label">
+                            Click to upload files (PDF, DOCX, XLSX - Max 5MB each)
+                        </label>
+                        <div id="fileList" class="file-list"></div>
                     </div>
-                    <input type="hidden" asp-for="Supporting_Documents" id="supportingDocuments" />
                 </div>
 
                 <button type="submit" class="btn btn-block">Submit Claim</button>
