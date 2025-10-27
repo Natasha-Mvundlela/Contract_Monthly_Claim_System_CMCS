@@ -67,8 +67,9 @@
                     <li>Allowed file types: PDF, DOCX, XLSX</li>
                 </ul>
             </div>
-
-            <form asp-action="Claim" method="post" id="claimForm">
+            <!-- enctype="multipart/form-data" for file uploads -->
+            <form asp-action="Claim" method="post" id="claimForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
