@@ -114,7 +114,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             if (string.IsNullOrEmpty(userEmail))
             {
                 TempData["ErrorMessage"] = "Please login to submit a claim.";
-                return RedirectToAction("Login");
+                return RedirectToAction("Status");
             }
 
             ViewBag.Faculties = new List<string> { "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting" };
