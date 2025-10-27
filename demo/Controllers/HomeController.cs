@@ -106,22 +106,27 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             }
             return View(user);
         }
-
         [HttpPost]
-        public IActionResult Claim(claim claims)
+        [ValidateAntiForgeryToken]
+        public IActionResult Claim(claim claims, List<IFormFile> supportingFiles)
         {
             var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail))
             {
                 TempData["ErrorMessage"] = "Please login to submit a claim.";
-                return RedirectToAction("Status");
+                return RedirectToAction("Login");
             }
 
+            // Re-populate dropdowns
             ViewBag.Faculties = new List<string> { "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting" };
             ViewBag.Modules = new List<string> { "Programming", "Database", "Information Security", "Web Development", "Software Engineering", "Network Fundamentals" };
+            ViewBag.UserEmail = userEmail;
 
             // Ensure the email is from session
             claims.Email_Address = userEmail;
+
+            Console.WriteLine($"Claim submission attempt by: {userEmail}");
+            Console.WriteLine($"Model State IsValid: {ModelState.IsValid}");
 
             if (ModelState.IsValid)
             {
@@ -138,48 +143,74 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                     claims.Calculated_Amount = claims.Hours_Worked * claims.Hourly_Rate;
 
                     // Handle file upload
-                    var uploadedFiles = new List<string>();
-                    var httpRequest = HttpContext.Request;
+                    var uploadedFileNames = new List<string>();
 
-                    if (httpRequest.Form.Files.Count > 0)
+                    if (supportingFiles != null && supportingFiles.Count > 0)
                     {
-                        foreach (var file in httpRequest.Form.Files)
+                        foreach (var file in supportingFiles)
                         {
-                            if (file.Length > 0)
+                            if (file.Length > 0 && file.Length < 5 * 1024 * 1024) // 5MB limit
                             {
-                                var fileName = $"{Guid.NewGuid()}_{file.FileName}";
-                                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", fileName);
+                                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
 
                                 // Ensure upload directory exists
-                                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                                if (!Directory.Exists(uploadsFolder))
+                                {
+                                    Directory.CreateDirectory(uploadsFolder);
+                                }
+
+                                var filePath = Path.Combine(uploadsFolder, fileName);
 
                                 using (var stream = new FileStream(filePath, FileMode.Create))
                                 {
                                     file.CopyTo(stream);
                                 }
-                                uploadedFiles.Add(fileName);
+                                uploadedFileNames.Add(fileName);
+                                Console.WriteLine($"File uploaded: {fileName}");
                             }
                         }
-                        claims.Supporting_Documents = string.Join(",", uploadedFiles);
                     }
+
+                    claims.Supporting_Documents = uploadedFileNames.Any() ? string.Join(",", uploadedFileNames) : "No documents";
 
                     // Save claim to database
                     created_queries saveClaim = new created_queries();
-                    saveClaim.store_claim(claims.Email_Address, claims.Claim_Date, claims.Faculty,
-                                        claims.Module, claims.Hours_Worked, claims.Hourly_Rate,
-                                        claims.Calculated_Amount, claims.Supporting_Documents);
+                    saveClaim.store_claim(
+                        claims.Email_Address,
+                        claims.Claim_Date,
+                        claims.Faculty,
+                        claims.Module,
+                        claims.Hours_Worked,
+                        claims.Hourly_Rate,
+                        claims.Calculated_Amount,
+                        claims.Supporting_Documents
+                    );
 
-                    TempData["SuccessMessage"] = "Claim submitted successfully!";
+                    Console.WriteLine("Claim saved successfully to database");
 
+                    TempData["SuccessMessage"] = "Claim submitted successfully! It is now pending approval.";
                     return RedirectToAction("Dashboard");
 
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "An error occurred while submitting your claim. Please try again.");
-                    _logger.LogError(ex, "Error submitting claim");
+                    Console.WriteLine($"Error submitting claim: {ex.Message}");
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                    ModelState.AddModelError("", $"An error occurred while submitting your claim: {ex.Message}");
+                    _logger.LogError(ex, "Error submitting claim for user {UserEmail}", userEmail);
                 }
             }
+            else
+            {
+                // Log validation errors
+                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    Console.WriteLine($"Validation error: {error.ErrorMessage}");
+                }
+            }
+
             return View(claims);
         }
 
