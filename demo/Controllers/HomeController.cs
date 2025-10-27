@@ -215,6 +215,22 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         }
 
         [HttpGet]
+        public IActionResult DebugClaims()
+        {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return Content("Not logged in");
+            }
+
+            created_queries queries = new created_queries();
+            var claims = queries.GetUserClaims(userEmail);
+
+            return Content($"User: {userEmail}, Claims Count: {claims.Count}\n" +
+                          string.Join("\n", claims.Select(c => $"Claim {c.ClaimID}: {c.Module} - {c.Status}")));
+        }
+
+        [HttpGet]
         public IActionResult Dashboard()
         {
             var userEmail = HttpContext.Session.GetString("UserEmail");
