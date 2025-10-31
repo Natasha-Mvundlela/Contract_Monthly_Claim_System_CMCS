@@ -267,7 +267,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail))
             {
-                return RedirectToAction("Status");
+                return RedirectToAction("Login");
             }
 
             created_queries queries = new created_queries();
