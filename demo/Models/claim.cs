@@ -28,14 +28,16 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         [Range(1, 1000, ErrorMessage = "Hourly rate must be between R1 and R1000")]
         public decimal Hourly_Rate { get; set; }
 
-        public decimal Calculated_Amount { get; set; }
+        // AUTO-CALCULATION: Automatically computed based on hours and rate
+        public decimal Calculated_Amount => Hours_Worked * Hourly_Rate;
+
         public string Supporting_Documents { get; set; }
         public string Status { get; set; } = "Pending";
         public DateTime SubmittedDate { get; set; } = DateTime.Now;
         public DateTime? ProcessedDate { get; set; }
         public string ProcessedBy { get; set; }
 
-        // Enhanced status tracking properties
+        // Automation: Detailed status tracking
         public string DetailedStatus
         {
             get
@@ -50,6 +52,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             }
         }
 
+        // Automation: Progress tracking
         public int ProgressPercentage
         {
             get
@@ -63,5 +66,25 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 };
             }
         }
+    }
+
+    // Enhanced model for validation rules
+    public class ClaimValidationRules
+    {
+        public decimal MaxHourlyRate { get; set; } = 1000;
+        public int MaxHoursPerMonth { get; set; } = 200;
+        public int MinHours { get; set; } = 1;
+        public decimal MinHourlyRate { get; set; } = 1;
+
+        // Department-specific rate limits
+        public Dictionary<string, decimal> DepartmentRateLimits => new()
+        {
+            { "ICT", 850 },
+            { "Education", 650 },
+            { "Law", 900 },
+            { "Commerce", 800 },
+            { "Humanities", 600 },
+            { "Finance and Accounting", 950 }
+        };
     }
 }

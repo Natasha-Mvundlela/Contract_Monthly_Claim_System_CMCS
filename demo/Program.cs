@@ -3,34 +3,53 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IClaimService, ClaimService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<IAutomatedVerificationService, AutomatedVerificationService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
-// Add session support with proper configuration
-builder.Services.AddDistributedMemoryCache(); // This is essential for session
+// Add HttpClient for external API calls
+builder.Services.AddHttpClient();
 
+// Configure authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    });
+
+// Configure authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("LecturerOnly", policy => policy.RequireRole("Lecturer"));
+    options.AddPolicy("CoordinatorOrManager", policy => policy.RequireRole("Coordinator", "Manager"));
+    options.AddPolicy("HROnly", policy => policy.RequireRole("HR"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
+// Add session support
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.Name = "ContractClaimSystem.Session";
 });
 
-// Add authentication (optional, but good to have)
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Home/Login";
-        options.AccessDeniedPath = "/Home/Login";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    });
+// Add distributed memory cache
+builder.Services.AddDistributedMemoryCache();
 
-builder.Services.AddAuthorization();
+// Configure application settings
+builder.Services.Configure<ClaimAutomationSettings>(
+    builder.Configuration.GetSection("ClaimAutomationSettings"));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -39,14 +58,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-// Add authentication & authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Add session middleware - MUST be after UseRouting and before MapControllerRoute
 app.UseSession();
 
 app.MapControllerRoute(
