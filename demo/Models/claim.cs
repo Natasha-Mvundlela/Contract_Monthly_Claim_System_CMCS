@@ -34,7 +34,6 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         public DateTime SubmittedDate { get; set; } = DateTime.Now;
         public DateTime? ProcessedDate { get; set; }
         public string ProcessedBy { get; set; }
-        public string RejectionReason { get; set; }
 
         // Enhanced status tracking properties
         public string DetailedStatus

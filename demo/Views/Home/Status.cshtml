@@ -95,15 +95,6 @@
                                         <span class="detail-value total-amount">R @claim.Calculated_Amount.ToString("F2")</span>
                                     </div>
                                 </div>
-
-                                @if (claim.Status == "Rejected" && !string.IsNullOrEmpty(claim.RejectionReason))
-                                {
-                                    <div class="rejection-reason">
-                                        <strong>Rejection Reason:</strong>
-                                        <p>@claim.RejectionReason</p>
-                                    </div>
-                                }
-
                                 @if (!string.IsNullOrEmpty(claim.Supporting_Documents))
                                 {
                                     <div class="documents-section">
