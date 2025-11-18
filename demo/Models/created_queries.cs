@@ -10,7 +10,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         private string connectionStringToInstance => $@"Server=(localdb)\{instanceName};Integrated Security=true;";
         private string connectionStringToDatabase => $@"Server=(localdb)\{instanceName};Database={databaseName};Integrated Security=true;";
 
-                public void InitializeSystem()
+        public void InitializeSystem()
         {
             try
             {
@@ -151,7 +151,6 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                     Calculated_Amount DECIMAL(10,2),
                     Supporting_Documents VARCHAR(500),
                     Status VARCHAR(50) DEFAULT 'Pending',
-                    RejectionReason VARCHAR(500),
                     SubmittedDate DATETIME DEFAULT GETDATE(),
                     ProcessedDate DATETIME NULL,
                     ProcessedBy VARCHAR(255) NULL,
@@ -171,32 +170,33 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         }
 
         public void store_user(string Full_Name, string Email_Address, string Password, string Role)
-{
-    try
-    {
-        //open connection
-        using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
         {
-            connect.Open();
-            //query to insert into a table
-            string query = @"insert into users values('" + Full_Name + "', '" + Email_Address + "', '" + Password + "', '" + Role + "' )";
-
-            //use the using function to command queries
-            using (SqlCommand insert = new SqlCommand(query, connect))
+            try
             {
-                //execute the query
-                insert.ExecuteNonQuery();
-                Console.WriteLine("user inserted successfully");
-            }
+                //open connection
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+                    //query to insert into a table
+                    string query = @"insert into users values('" + Full_Name + "', '" + Email_Address + "', '" + Password + "', '" + Role + "' )";
 
-            connect.Close();
+                    //use the using function to command queries
+                    using (SqlCommand insert = new SqlCommand(query, connect))
+                    {
+                        //execute the query
+                        insert.ExecuteNonQuery();
+                        Console.WriteLine("user inserted successfully");
+                    }
+
+                    connect.Close();
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error storing user: {error.Message}");
+                throw;
+            }
         }
-    }
-    catch (Exception error)
-    {
-        Console.WriteLine(error.Message);
-    }
-}
         //method to login the user
         public bool login_user(string Email_Address, string Password, string Role)
         {
@@ -213,38 +213,25 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                     string query = @"select * from Users where Email_Address='" + Email_Address + "' and Password='" + Password + "' and Role='" + Role + "';";
 
                     //use the using function to command queries
-                    using (SqlCommand insert = new SqlCommand(query, connect))
+                    using (SqlCommand cmd = new SqlCommand(query, connect))
                     {
 
                         //execute the query
 
-                        using (SqlDataReader find = insert.ExecuteReader())
+                        using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-
-                            while (find.Read())
+                            if (reader.Read())
                             {
-                                Console.WriteLine(find["userID"]);
-                                Console.WriteLine(find["Full_Name"]);
-                                Console.WriteLine(find["Email_Address"]);
-                                Console.WriteLine(find["Password"]);
-                                Console.WriteLine(find["Role"]);
-
+                                Console.WriteLine($"User found: {reader["Full_Name"]}");
                                 found = true;
                             }
-
-                            Console.WriteLine("user found");
-
                         }
-
                     }
-
-                    //close the connection
-                    connect.Close();
                 }
             }
             catch (Exception error)
             {
-                Console.WriteLine();
+                Console.WriteLine($"Login error: {error.Message}");
             }
             return found;
         }//end of login user method
@@ -260,7 +247,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
                 {
                     connect.Open();
-                    string query = @"INSERT INTO Claims ('" +Email_Address + "', '" +Claim_Date+ "', '" + Faculty+ "', '" + Module + "' , '"+ Hours_Worked+ "' , '" + Hourly_Rate + "' , '" + Calculated_Amount + "' , '" + Supporting_Documents + "', 'Pending' )";
+                    string query = @"INSERT INTO Claims ('" + Email_Address + "', '" + Claim_Date + "', '" + Faculty + "', '" + Module + "' , '" + Hours_Worked + "' , '" + Hourly_Rate + "' , '" + Calculated_Amount + "' , '" + Supporting_Documents + "', 'Pending' )";
                     using (SqlCommand insert = new SqlCommand(query, connect))
                     {
 
@@ -347,8 +334,6 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                                     Calculated_Amount = reader.GetDecimal(reader.GetOrdinal("Calculated_Amount")),
                                     Supporting_Documents = reader.GetString(reader.GetOrdinal("Supporting_Documents")),
                                     Status = reader.GetString(reader.GetOrdinal("Status")),
-                                    RejectionReason = reader.IsDBNull(reader.GetOrdinal("RejectionReason")) ?
-                                        "" : reader.GetString(reader.GetOrdinal("RejectionReason")),
                                     SubmittedDate = reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
                                     ProcessedDate = reader.IsDBNull(reader.GetOrdinal("ProcessedDate")) ?
                                         null : reader.GetDateTime(reader.GetOrdinal("ProcessedDate"))
@@ -424,3 +409,4 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         }
     }
 }
+

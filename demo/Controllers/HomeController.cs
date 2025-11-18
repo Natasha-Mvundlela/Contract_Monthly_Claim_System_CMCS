@@ -20,12 +20,22 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             ViewBag.WelcomeMessage = "Welcome to the Contract Monthly Claim System";
             ViewBag.SystemDescription = "Streamline your claim submission and approval process with our efficient system.";
 
-            created_queries create = new created_queries();
-            create.InitializeSystem();
+            // Initialize system on first load
+            try
+            {
+                created_queries create = new created_queries();
+                create.InitializeSystem();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "System initialization warning");
+            }
+
             return View();
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Index(register user)
         {
             if (ModelState.IsValid && IsValidEmail(user.Email_Address))
@@ -39,10 +49,15 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error during registration for {Email}", user.Email_Address);
                     ModelState.AddModelError("", "An error occurred during registration. Please try again.");
-                    _logger.LogError(ex, "Error during registration");
                 }
             }
+            else
+            {
+                ModelState.AddModelError("", "Please provide valid registration details.");
+            }
+
             return View(user);
         }
 
@@ -53,6 +68,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Login(login user)
         {
             if (ModelState.IsValid && IsValidEmail(user.Email_Address))
@@ -69,43 +85,53 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                         HttpContext.Session.SetString("UserRole", user.Role);
                         HttpContext.Session.SetString("IsAuthenticated", "true");
 
-                        TempData["SuccessMessage"] = "Login successful!";
+                        TempData["SuccessMessage"] = $"Welcome back!";
 
-                        Console.WriteLine($"Login successful for: {user.Email_Address}, Role: {user.Role}");
+                        _logger.LogInformation("User {Email} logged in successfully as {Role}",
+                            user.Email_Address, user.Role);
 
                         // Redirect based on role
-                        if (user.Role.ToLower() == "lecturer")
-                        {
-                            return RedirectToAction("Dashboard");
-                        }
-                        else if (user.Role.ToLower() == "pc" || user.Role.ToLower() == "admin")
-                        {
-                            return RedirectToAction("Approval");
-                        }
-                        else
-                        {
-                            return RedirectToAction("Dashboard");
-                        }
+                        return RedirectToAction("Dashboard");
                     }
                     else
                     {
                         ModelState.AddModelError("", "Invalid email, password, or role. Please try again.");
-                        Console.WriteLine("Login failed: Invalid credentials");
                     }
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error during login for {Email}", user.Email_Address);
                     ModelState.AddModelError("", "An error occurred during login. Please try again.");
-                    _logger.LogError(ex, "Error during login");
-                    Console.WriteLine($"Login error: {ex.Message}");
                 }
             }
-            else
-            {
-                ModelState.AddModelError("", "Please enter valid email and password.");
-            }
+
             return View(user);
         }
+
+        [HttpGet]
+        public IActionResult Claim()
+        {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                TempData["ErrorMessage"] = "Please login to submit a claim.";
+                return RedirectToAction("Login");
+            }
+
+            // Pre-populate form data
+            ViewBag.Faculties = new List<string> {
+                "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting"
+            };
+            ViewBag.Modules = new List<string> {
+                "Programming", "Database", "Information Security", "Web Development",
+                "Software Engineering", "Network Fundamentals"
+            };
+            ViewBag.UserEmail = userEmail;
+            ViewBag.CurrentDate = DateTime.Now.ToString("yyyy-MM-dd");
+
+            return View(new claim { Email_Address = userEmail });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Claim(claim claims, List<IFormFile> supportingFiles)
@@ -117,16 +143,18 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Re-populate dropdowns
-            ViewBag.Faculties = new List<string> { "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting" };
-            ViewBag.Modules = new List<string> { "Programming", "Database", "Information Security", "Web Development", "Software Engineering", "Network Fundamentals" };
+            // Re-populate dropdowns for form re-display
+            ViewBag.Faculties = new List<string> {
+                "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting"
+            };
+            ViewBag.Modules = new List<string> {
+                "Programming", "Database", "Information Security", "Web Development",
+                "Software Engineering", "Network Fundamentals"
+            };
             ViewBag.UserEmail = userEmail;
 
             // Ensure the email is from session
             claims.Email_Address = userEmail;
-
-            Console.WriteLine($"Claim submission attempt by: {userEmail}");
-            Console.WriteLine($"Model State IsValid: {ModelState.IsValid}");
 
             if (ModelState.IsValid)
             {
@@ -167,12 +195,12 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                                     file.CopyTo(stream);
                                 }
                                 uploadedFileNames.Add(fileName);
-                                Console.WriteLine($"File uploaded: {fileName}");
                             }
                         }
                     }
 
-                    claims.Supporting_Documents = uploadedFileNames.Any() ? string.Join(",", uploadedFileNames) : "No documents";
+                    claims.Supporting_Documents = uploadedFileNames.Any() ?
+                        string.Join(",", uploadedFileNames) : "No documents";
 
                     // Save claim to database
                     created_queries saveClaim = new created_queries();
@@ -187,47 +215,17 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                         claims.Supporting_Documents
                     );
 
-                    Console.WriteLine("Claim saved successfully to database");
-
                     TempData["SuccessMessage"] = "Claim submitted successfully! It is now pending approval.";
                     return RedirectToAction("Dashboard");
-
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error submitting claim: {ex.Message}");
-                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                    ModelState.AddModelError("", $"An error occurred while submitting your claim: {ex.Message}");
                     _logger.LogError(ex, "Error submitting claim for user {UserEmail}", userEmail);
-                }
-            }
-            else
-            {
-                // Log validation errors
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    Console.WriteLine($"Validation error: {error.ErrorMessage}");
+                    ModelState.AddModelError("", $"An error occurred while submitting your claim: {ex.Message}");
                 }
             }
 
             return View(claims);
-        }
-
-        [HttpGet]
-        public IActionResult DebugClaims()
-        {
-            var userEmail = HttpContext.Session.GetString("UserEmail");
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                return Content("Not logged in");
-            }
-
-            created_queries queries = new created_queries();
-            var claims = queries.GetUserClaims(userEmail);
-
-            return Content($"User: {userEmail}, Claims Count: {claims.Count}\n" +
-                          string.Join("\n", claims.Select(c => $"Claim {c.ClaimID}: {c.Module} - {c.Status}")));
         }
 
         [HttpGet]
@@ -245,18 +243,21 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             created_queries queries = new created_queries();
             var userClaims = queries.GetUserClaims(userEmail);
 
-            //data
+            // Dashboard statistics
             ViewBag.RecentClaims = userClaims.Take(5).ToList();
             ViewBag.TotalClaims = userClaims.Count;
             ViewBag.PendingClaims = userClaims.Count(c => c.Status == "Pending");
-            ViewBag.ApprovedClaims = userClaims.Count(c => c.Status == "Pre-Approved");
             ViewBag.ApprovedClaims = userClaims.Count(c => c.Status == "Approved");
+            ViewBag.RejectedClaims = userClaims.Count(c => c.Status == "Rejected");
 
             // Calculate total approved amount
             var totalApproved = userClaims
                 .Where(c => c.Status == "Approved")
                 .Sum(c => c.Calculated_Amount);
             ViewBag.TotalApprovedAmount = totalApproved;
+
+            ViewBag.UserRole = userRole;
+            ViewBag.UserEmail = userEmail;
 
             return View();
         }
@@ -272,6 +273,8 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
             created_queries queries = new created_queries();
             var userClaims = queries.GetUserClaims(userEmail);
+
+            ViewBag.UserEmail = userEmail;
             return View(userClaims);
         }
 
@@ -290,8 +293,8 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             created_queries queries = new created_queries();
             var pendingClaims = queries.GetPendingClaims();
 
-            // Debug information
-            Console.WriteLine($"Found {pendingClaims.Count} pending claims for approval");
+            ViewBag.UserRole = userRole;
+            ViewBag.UserEmail = userEmail;
 
             return View(pendingClaims);
         }
@@ -302,6 +305,13 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         {
             try
             {
+                var userRole = HttpContext.Session.GetString("UserRole");
+                if (userRole != "pc" && userRole != "admin")
+                {
+                    TempData["ErrorMessage"] = "Access denied.";
+                    return RedirectToAction("Dashboard");
+                }
+
                 var processedBy = HttpContext.Session.GetString("UserEmail") ?? "System";
                 created_queries approve = new created_queries();
                 bool success = approve.ApproveClaim(claimId, processedBy);
@@ -309,6 +319,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                 if (success)
                 {
                     TempData["SuccessMessage"] = "Claim approved successfully!";
+                    _logger.LogInformation("Claim {ClaimId} approved by {User}", claimId, processedBy);
                 }
                 else
                 {
@@ -317,8 +328,8 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error approving claim {ClaimId}", claimId);
                 TempData["ErrorMessage"] = "An error occurred while approving the claim.";
-                _logger.LogError(ex, "Error approving claim");
             }
             return RedirectToAction("Approval");
         }
@@ -329,6 +340,19 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         {
             try
             {
+                var userRole = HttpContext.Session.GetString("UserRole");
+                if (userRole != "pc" && userRole != "admin")
+                {
+                    TempData["ErrorMessage"] = "Access denied.";
+                    return RedirectToAction("Dashboard");
+                }
+
+                if (string.IsNullOrWhiteSpace(reason))
+                {
+                    TempData["ErrorMessage"] = "Please provide a reason for rejection.";
+                    return RedirectToAction("Approval");
+                }
+
                 var processedBy = HttpContext.Session.GetString("UserEmail") ?? "System";
                 created_queries reject = new created_queries();
                 bool success = reject.RejectClaim(claimId, reason, processedBy);
@@ -336,6 +360,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                 if (success)
                 {
                     TempData["SuccessMessage"] = "Claim rejected successfully!";
+                    _logger.LogInformation("Claim {ClaimId} rejected by {User}", claimId, processedBy);
                 }
                 else
                 {
@@ -344,8 +369,8 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error rejecting claim {ClaimId}", claimId);
                 TempData["ErrorMessage"] = "An error occurred while rejecting the claim.";
-                _logger.LogError(ex, "Error rejecting claim");
             }
             return RedirectToAction("Approval");
         }
@@ -353,7 +378,10 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
             HttpContext.Session.Clear();
+
+            _logger.LogInformation("User {Email} logged out", userEmail);
             TempData["SuccessMessage"] = "You have been logged out successfully.";
             return RedirectToAction("Login");
         }
@@ -374,7 +402,10 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
     }
 }

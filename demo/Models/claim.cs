@@ -11,6 +11,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         public string Email_Address { get; set; }
 
         [Required(ErrorMessage = "Claim date is required")]
+        [DataType(DataType.Date)]
         public DateTime Claim_Date { get; set; }
 
         [Required(ErrorMessage = "Faculty is required")]
@@ -30,9 +31,38 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         public decimal Calculated_Amount { get; set; }
         public string Supporting_Documents { get; set; }
         public string Status { get; set; } = "Pending";
-        public string RejectionReason { get; set; }
         public DateTime SubmittedDate { get; set; } = DateTime.Now;
         public DateTime? ProcessedDate { get; set; }
         public string ProcessedBy { get; set; }
+        public string RejectionReason { get; set; }
+
+        // Enhanced status tracking properties
+        public string DetailedStatus
+        {
+            get
+            {
+                return Status switch
+                {
+                    "Pending" => "Awaiting Review",
+                    "Approved" => ProcessedDate.HasValue ? "Approved - Awaiting Payment" : "Approved",
+                    "Rejected" => "Rejected",
+                    _ => Status
+                };
+            }
+        }
+
+        public int ProgressPercentage
+        {
+            get
+            {
+                return Status switch
+                {
+                    "Pending" => 25,
+                    "Approved" => 75,
+                    "Rejected" => 100,
+                    _ => 0
+                };
+            }
+        }
     }
 }
