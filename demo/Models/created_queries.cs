@@ -342,25 +342,24 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 {
                     connect.Open();
 
-                    string query = @"  string whereClause = email != null ? "WHERE Email_Address = "@Email" : "";
-                    
+                    string whereClause = email != null ? "WHERE Email_Address = @Email" : "";
                     string statsQuery = $@"
-                        SELECT 
-                            COUNT(*) as TotalClaims,
-                            SUM(CASE WHEN Status = 'Pending' THEN 1 ELSE 0 END) as PendingClaims,
-                            SUM(CASE WHEN Status = 'Approved' THEN 1 ELSE 0 END) as ApprovedClaims,
-                            SUM(CASE WHEN Status = 'Rejected' THEN 1 ELSE 0 END) as RejectedClaims,
-                            SUM(CASE WHEN Status = 'Approved' THEN Calculated_Amount ELSE 0 END) as TotalApprovedAmount,
-                            AVG(CASE WHEN Status = 'Approved' THEN Calculated_Amount ELSE NULL END) as AverageApprovedAmount
-                        FROM Claims 
-                        {whereClause}";
-             using (SqlCommand cmd = new SqlCommand(statsQuery, connect))
+                    SELECT 
+                        COUNT(*) as TotalClaims,
+                        SUM(CASE WHEN Status = 'Pending' THEN 1 ELSE 0 END) as PendingClaims,
+                        SUM(CASE WHEN Status = 'Approved' THEN 1 ELSE 0 END) as ApprovedClaims,
+                        SUM(CASE WHEN Status = 'Rejected' THEN 1 ELSE 0 END) as RejectedClaims,
+                        SUM(CASE WHEN Status = 'Approved' THEN Calculated_Amount ELSE 0 END) as TotalApprovedAmount,
+                        AVG(CASE WHEN Status = 'Approved' THEN Calculated_Amount ELSE NULL END) as AverageApprovedAmount
+                    FROM Claims 
+                    {whereClause}";
+                    using (SqlCommand cmd = new SqlCommand(statsQuery, connect))
                     {
                         if (email != null)
                         {
                             cmd.Parameters.AddWithValue("@Email", email);
                         }
-                        
+
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
