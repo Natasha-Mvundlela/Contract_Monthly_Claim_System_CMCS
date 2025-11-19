@@ -96,6 +96,21 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             }
         }
 
+        public void TestConnection()
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+                    Console.WriteLine("Database connection successful!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Database connection failed: {ex.Message}");
+            }
+        }
 
         // -----------------------------
         // Database Handling
@@ -251,8 +266,13 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                     using (SqlCommand insert = new SqlCommand(query, connect))
                     {
 
-                        insert.ExecuteNonQuery();
-                        Console.WriteLine("Claim inserted successfully with Pending status");
+                        int rowsAffected = insert.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            // AUTOMATION: Log successful claim submission
+                            Console.WriteLine($"Claim submitted successfully - Email: {Email_Address}, Amount: {Calculated_Amount}, Faculty: {Faculty}");
+                        }
                     }
                 }
             }
@@ -263,6 +283,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             }
         }
 
+        // AUTOMATION: Enhanced claims retrieval with sorting and filtering
         // Get claims for approval (for PC/Admin)
         public List<claim> GetPendingClaims()
         {
@@ -272,7 +293,13 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
                 {
                     connect.Open();
-                    string query = @"SELECT * FROM Claims WHERE Status = 'Pending' ORDER BY SubmittedDate DESC";
+                    string query = @"
+                        SELECT claimID, Email_Address, Claim_Date, Faculty, Module, 
+                               Hours_Worked, Hourly_Rate, Calculated_Amount, 
+                               Supporting_Documents, Status, SubmittedDate
+                        FROM Claims 
+                        WHERE Status = 'Pending' 
+                        ORDER BY Calculated_Amount DESC, SubmittedDate ASC";
 
                     using (SqlCommand cmd = new SqlCommand(query, connect))
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -305,39 +332,47 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         }
 
         // Get claims by user email
-        public List<claim> GetUserClaims(string email)
+        // AUTOMATION: Add method for claim statistics
+        public ClaimStatistics GetClaimStatistics(string email = null)
         {
-            var claims = new List<claim>();
+            var statistics = new ClaimStatistics();
             try
             {
                 using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
                 {
                     connect.Open();
-                    string query = @"SELECT * FROM Claims WHERE Email_Address = @Email ORDER BY SubmittedDate DESC";
 
-                    using (SqlCommand cmd = new SqlCommand(query, connect))
+                    string query = @"  string whereClause = email != null ? "WHERE Email_Address = "@Email" : "";
+                    
+                    string statsQuery = $@"
+                        SELECT 
+                            COUNT(*) as TotalClaims,
+                            SUM(CASE WHEN Status = 'Pending' THEN 1 ELSE 0 END) as PendingClaims,
+                            SUM(CASE WHEN Status = 'Approved' THEN 1 ELSE 0 END) as ApprovedClaims,
+                            SUM(CASE WHEN Status = 'Rejected' THEN 1 ELSE 0 END) as RejectedClaims,
+                            SUM(CASE WHEN Status = 'Approved' THEN Calculated_Amount ELSE 0 END) as TotalApprovedAmount,
+                            AVG(CASE WHEN Status = 'Approved' THEN Calculated_Amount ELSE NULL END) as AverageApprovedAmount
+                        FROM Claims 
+                        {whereClause}";
+             using (SqlCommand cmd = new SqlCommand(statsQuery, connect))
                     {
-                        cmd.Parameters.AddWithValue("@Email", email);
+                        if (email != null)
+                        {
+                            cmd.Parameters.AddWithValue("@Email", email);
+                        }
+                        
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            while (reader.Read())
+                            if (reader.Read())
                             {
-                                claims.Add(new claim
-                                {
-                                    ClaimID = reader.GetInt32(reader.GetOrdinal("claimID")),
-                                    Email_Address = reader.GetString(reader.GetOrdinal("Email_Address")),
-                                    Claim_Date = reader.GetDateTime(reader.GetOrdinal("Claim_Date")),
-                                    Faculty = reader.GetString(reader.GetOrdinal("Faculty")),
-                                    Module = reader.GetString(reader.GetOrdinal("Module")),
-                                    Hours_Worked = reader.GetInt32(reader.GetOrdinal("Hours_Worked")),
-                                    Hourly_Rate = reader.GetDecimal(reader.GetOrdinal("Hourly_Rate")),
-                                    Calculated_Amount = reader.GetDecimal(reader.GetOrdinal("Calculated_Amount")),
-                                    Supporting_Documents = reader.GetString(reader.GetOrdinal("Supporting_Documents")),
-                                    Status = reader.GetString(reader.GetOrdinal("Status")),
-                                    SubmittedDate = reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
-                                    ProcessedDate = reader.IsDBNull(reader.GetOrdinal("ProcessedDate")) ?
-                                        null : reader.GetDateTime(reader.GetOrdinal("ProcessedDate"))
-                                });
+                                statistics.TotalClaims = reader.GetInt32(reader.GetOrdinal("TotalClaims"));
+                                statistics.PendingClaims = reader.GetInt32(reader.GetOrdinal("PendingClaims"));
+                                statistics.ApprovedClaims = reader.GetInt32(reader.GetOrdinal("ApprovedClaims"));
+                                statistics.RejectedClaims = reader.GetInt32(reader.GetOrdinal("RejectedClaims"));
+                                statistics.TotalApprovedAmount = reader.IsDBNull(reader.GetOrdinal("TotalApprovedAmount")) ? 
+                                    0 : reader.GetDecimal(reader.GetOrdinal("TotalApprovedAmount"));
+                                statistics.AverageApprovedAmount = reader.IsDBNull(reader.GetOrdinal("AverageApprovedAmount")) ? 
+                                    0 : reader.GetDecimal(reader.GetOrdinal("AverageApprovedAmount"));
                             }
                         }
                     }
@@ -345,11 +380,10 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             }
             catch (Exception error)
             {
-                Console.WriteLine($"Error getting user claims: {error.Message}");
+                Console.WriteLine($"Error getting claim statistics: {error.Message}");
             }
-            return claims;
+            return statistics;
         }
-
         // Approve claim
         public bool ApproveClaim(int claimId, string processedBy)
         {

@@ -78,13 +78,13 @@ class ClaimAutomation {
         let feedbackClass = '';
 
         if (rate > 800) {
-            feedbackMessage = '⚠️ High hourly rate - may require additional approval';
+            feedbackMessage = 'High hourly rate - may require additional approval';
             feedbackClass = 'warning';
         } else if (hours > 40) {
-            feedbackMessage = 'ℹ️ Significant hours worked - ensure proper documentation';
+            feedbackMessage = 'Significant hours worked - ensure proper documentation';
             feedbackClass = 'info';
         } else if (total > 5000) {
-            feedbackMessage = '💰 Large claim amount - will be prioritized for review';
+            feedbackMessage = 'Large claim amount - will be prioritized for review';
             feedbackClass = 'success';
         }
 
@@ -133,7 +133,7 @@ class ClaimAutomation {
         suggestionDiv.id = 'rateSuggestion';
         suggestionDiv.className = 'rate-suggestion';
         suggestionDiv.innerHTML = `
-            <small>💡 Suggested rate for ${faculty}: R${suggestion}</small>
+            <small>Suggested rate for ${faculty}: R${suggestion}</small>
         `;
 
         const rateGroup = document.querySelector('label[for="rate"]').parentElement;
@@ -356,15 +356,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Global function for backward compatibility
 function calculateTotal() {
-    const rate = parseFloat(document.getElementById('rate')?.value) || 0;
-    const hours = parseFloat(document.getElementById('hoursWorked')?.value) || 0;
+    const rate = parseFloat(document.getElementById('rate').value) || 0;
+    const hours = parseFloat(document.getElementById('hoursWorked').value) || 0;
     const total = rate * hours;
 
-    const rateDisplay = document.getElementById('rateDisplay');
-    const hoursDisplay = document.getElementById('hoursDisplay');
-    const totalDisplay = document.getElementById('totalDisplay');
-
-    if (rateDisplay) rateDisplay.textContent = 'R ' + rate.toFixed(2);
-    if (hoursDisplay) hoursDisplay.textContent = hours.toFixed(1) + ' hours';
-    if (totalDisplay) totalDisplay.textContent = 'R ' + total.toFixed(2);
+    document.getElementById('rateDisplay').textContent = 'R ' + rate.toFixed(2);
+    document.getElementById('hoursDisplay').textContent = hours.toFixed(1) + ' hours';
+    document.getElementById('totalDisplay').textContent = 'R ' + total.toFixed(2);
 }
+
+// File upload display
+document.getElementById('uploadFile').addEventListener('change', function (e) {
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+
+    if (e.target.files.length > 0) {
+        Array.from(e.target.files).forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <span>📄 ${file.name}</span>
+                <span>(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function () {
+    calculateTotal();
+});

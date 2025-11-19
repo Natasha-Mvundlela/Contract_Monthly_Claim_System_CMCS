@@ -29,7 +29,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         public decimal Hourly_Rate { get; set; }
 
         // AUTO-CALCULATION: Automatically computed based on hours and rate
-        public decimal Calculated_Amount => Hours_Worked * Hourly_Rate;
+        public decimal Calculated_Amount { get; set; } // <-- Change from read-only to settable
 
         public string Supporting_Documents { get; set; }
         public string Status { get; set; } = "Pending";
