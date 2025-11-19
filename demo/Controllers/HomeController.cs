@@ -299,32 +299,35 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
             // Get claims for the dashboard
             created_queries queries = new created_queries();
-            var userClaims = queries.GetClaimStatistics(userEmail)?.Claims ?? new List<claim>();
+            var claimStats = queries.GetClaimStatistics(userEmail);
+            var userClaims = claimStats?.Claims ?? new List<claim>();
 
-            // AUTOMATION: Enhanced dashboard statistics
             ViewBag.RecentClaims = userClaims.Take(5).ToList();
             ViewBag.TotalClaims = userClaims.Count;
             ViewBag.PendingClaims = userClaims.Count(c => c.Status == "Pending");
             ViewBag.ApprovedClaims = userClaims.Count(c => c.Status == "Approved");
-            ViewBag.RejectedClaims = userClaims.Count(c => c.Status == "Rejected");
 
-            // Calculate statistics
+            // Calculate total approved amount
             var totalApproved = userClaims
                 .Where(c => c.Status == "Approved")
                 .Sum(c => c.Calculated_Amount);
             ViewBag.TotalApprovedAmount = totalApproved;
 
-            // AUTOMATION: Monthly statistics
-            var currentMonthClaims = userClaims
-                .Where(c => c.SubmittedDate.Month == DateTime.Now.Month)
-                .ToList();
-            ViewBag.MonthlyClaims = currentMonthClaims.Count;
-            ViewBag.MonthlyAmount = currentMonthClaims.Sum(c => c.Calculated_Amount);
-
-            ViewBag.UserRole = userRole;
-            ViewBag.UserEmail = userEmail;
-
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult Status()
+        {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return RedirectToAction("Login"); 
+            }
+
+            created_queries queries = new created_queries();
+            var userClaims = queries.GetClaimStatistics(userEmail);
+            return View(userClaims);
         }
 
         [HttpGet]
