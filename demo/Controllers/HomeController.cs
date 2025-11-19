@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Contract_Monthly_Claim_System_CMCS.Models;
+using demo.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Contract_Monthly_Claim_System_CMCS.Controllers
@@ -35,6 +36,112 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult Login(login user)
+        {
+            if (ModelState.IsValid && IsValidEmail(user.Email_Address))
+            {
+                try
+                {
+                    created_queries check = new created_queries();
+                    bool found = check.login_user(user.Email_Address, user.Password, user.Role);
+
+                    if (found)
+                    {
+                        // Store user information in session
+                        HttpContext.Session.SetString("UserEmail", user.Email_Address);
+                        HttpContext.Session.SetString("UserRole", user.Role);
+                        HttpContext.Session.SetString("IsAuthenticated", "true");
+
+                        TempData["SuccessMessage"] = "Login successful!";
+
+                        Console.WriteLine($"Login successful for: {user.Email_Address}, Role: {user.Role}");
+
+                        // Redirect based on role
+                        if (user.Role.ToLower() == "lecturer")
+                        {
+                            return RedirectToAction("Dashboard");
+                        }
+                        else if (user.Role.ToLower() == "pc" || user.Role.ToLower() == "admin")
+                        {
+                            return RedirectToAction("Approval");
+                        }
+                        else
+                        {
+                            return RedirectToAction("Dashboard");
+                        }
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Invalid email, password, or role. Please try again.");
+                        Console.WriteLine("Login failed: Invalid credentials");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "An error occurred during login. Please try again.");
+                    _logger.LogError(ex, "Error during login");
+                    Console.WriteLine($"Login error: {ex.Message}");
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("", "Please enter valid email and password.");
+            }
+            return View(user);
+        }
+
+        [HttpGet]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            TempData["SuccessMessage"] = "You have been logged out successfully.";
+            return RedirectToAction("Login");
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        [HttpGet]
+        public IActionResult Claim()
+        {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                TempData["ErrorMessage"] = "Please login to submit a claim.";
+                return RedirectToAction("Login");
+            }
+
+            // dropdowns for the claim view
+            ViewBag.Faculties = new List<string> {
+                "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting"
+            };
+            ViewBag.Modules = new List<string> {
+                "Programming", "Database", "Information Security", "Web Development",
+                "Software Engineering", "Network Fundamentals"
+            };
+            ViewBag.UserEmail = userEmail;
+
+            // Return the claim view
+            return View();
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Claim(claim claims, List<IFormFile> supportingFiles)
@@ -46,7 +153,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Re-populate dropdowns
+            // dropdowns
             ViewBag.Faculties = new List<string> {
                 "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting"
             };
@@ -263,9 +370,8 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
             return insights.Any() ? string.Join("; ", insights) : "Meets standard criteria";
         }
-
-        // ... rest of the controller methods remain similar but enhanced
     }
+}
 
     // AUTOMATION: Validation result class
     public class ValidationResult
@@ -274,4 +380,3 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         public List<string> Errors { get; set; } = new List<string>();
         public List<string> Warnings { get; set; } = new List<string>();
     }
-}
