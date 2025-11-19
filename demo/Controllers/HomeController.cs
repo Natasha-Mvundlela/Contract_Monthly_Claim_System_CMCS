@@ -192,7 +192,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
             // Get claims for the dashboard
             created_queries queries = new created_queries();
-            var userClaims = queries.GetUserClaims(userEmail);
+            var userClaims = queries.GetClaimStatistics(userEmail)?.Claims ?? new List<claim>();
 
             // AUTOMATION: Enhanced dashboard statistics
             ViewBag.RecentClaims = userClaims.Take(5).ToList();
