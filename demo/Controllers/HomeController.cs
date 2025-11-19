@@ -37,6 +37,21 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         }
 
         [HttpGet]
+        public IActionResult TestDatabase()
+        {
+            try
+            {
+                created_queries queries = new created_queries();
+                var testClaims = queries.GetPendingClaims();
+                return Content($"Database connection successful. Pending claims: {testClaims.Count}");
+            }
+            catch (Exception ex)
+            {
+                return Content($"Database error: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
         public IActionResult Login()
         {
             return View();
