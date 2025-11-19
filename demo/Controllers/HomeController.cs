@@ -36,6 +36,27 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             return View();
         }
 
+        [HttpPost]
+        public IActionResult Index(register user)
+        {
+            if (ModelState.IsValid && IsValidEmail(user.Email_Address))
+            {
+                try
+                {
+                    created_queries create_user = new created_queries();
+                    create_user.store_user(user.Full_Name, user.Email_Address, user.Password, user.Role);
+                    TempData["SuccessMessage"] = "Registration successful! Please login.";
+                    return RedirectToAction("Login");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "An error occurred during registration. Please try again.");
+                    _logger.LogError(ex, "Error during registration");
+                }
+            }
+            return View(user);
+        }
+
         [HttpGet]
         public IActionResult TestDatabase()
         {
@@ -265,6 +286,76 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             return View(claims);
         }
 
+        [HttpGet]
+        public IActionResult DebugClaims()
+        {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return Content("Not logged in");
+            }
+
+            created_queries queries = new created_queries();
+            var claims = queries.GetUserClaims(userEmail);
+
+            return Content($"User: {userEmail}, Claims Count: {claims.Count}\n" +
+                          string.Join("\n", claims.Select(c => $"Claim {c.ClaimID}: {c.Module} - {c.Status}")));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ApproveClaim(int claimId)
+        {
+            try
+            {
+                var processedBy = HttpContext.Session.GetString("UserEmail") ?? "System";
+                created_queries approve = new created_queries();
+                bool success = approve.ApproveClaim(claimId, processedBy);
+
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Claim approved successfully!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to approve claim. Please try again.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while approving the claim.";
+                _logger.LogError(ex, "Error approving claim");
+            }
+            return RedirectToAction("Approval");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RejectClaim(int claimId, string reason)
+        {
+            try
+            {
+                var processedBy = HttpContext.Session.GetString("UserEmail") ?? "System";
+                created_queries reject = new created_queries();
+                bool success = reject.RejectClaim(claimId, reason, processedBy);
+
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Claim rejected successfully!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to reject claim. Please try again.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while rejecting the claim.";
+                _logger.LogError(ex, "Error rejecting claim");
+            }
+            return RedirectToAction("Approval");
+        }
+
         // AUTOMATION: Enhanced claim validation method
         private ValidationResult ValidateClaim(claim claim)
         {
@@ -314,8 +405,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
             // Get claims for the dashboard
             created_queries queries = new created_queries();
-            var claimStats = queries.GetClaimStatistics(userEmail);
-            var userClaims = claimStats?.Claims ?? new List<claim>();
+            var userClaims = queries.GetUserClaims(userEmail);
 
             ViewBag.RecentClaims = userClaims.Take(5).ToList();
             ViewBag.TotalClaims = userClaims.Count;
@@ -341,7 +431,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             }
 
             created_queries queries = new created_queries();
-            var userClaims = queries.GetClaimStatistics(userEmail);
+            var userClaims = queries.GetUserClaims(userEmail);
             return View(userClaims);
         }
 

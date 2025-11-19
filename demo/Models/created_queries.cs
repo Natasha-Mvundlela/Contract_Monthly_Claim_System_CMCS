@@ -262,23 +262,32 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
                 {
                     connect.Open();
-                    string query = @"INSERT INTO Claims ('" + Email_Address + "', '" + Claim_Date + "', '" + Faculty + "', '" + Module + "' , '" + Hours_Worked + "' , '" + Hourly_Rate + "' , '" + Calculated_Amount + "' , '" + Supporting_Documents + "', 'Pending' )";
+                    string query = @"INSERT INTO Claims 
+                            (Email_Address, Claim_Date, Faculty, Module, Hours_Worked, 
+                             Hourly_Rate, Calculated_Amount, Supporting_Documents, Status) 
+                            VALUES (@EmailAddress, @ClaimDate, @Faculty, @Module, @HoursWorked, 
+                                    @HourlyRate, @CalculatedAmount, @SupportingDocuments, 'Pending')";
+
                     using (SqlCommand insert = new SqlCommand(query, connect))
                     {
+                        insert.Parameters.AddWithValue("@EmailAddress", Email_Address);
+                        insert.Parameters.AddWithValue("@ClaimDate", Claim_Date);
+                        insert.Parameters.AddWithValue("@Faculty", Faculty);
+                        insert.Parameters.AddWithValue("@Module", Module);
+                        insert.Parameters.AddWithValue("@HoursWorked", Hours_Worked);
+                        insert.Parameters.AddWithValue("@HourlyRate", Hourly_Rate);
+                        insert.Parameters.AddWithValue("@CalculatedAmount", Calculated_Amount);
+                        insert.Parameters.AddWithValue("@SupportingDocuments", Supporting_Documents ?? "");
 
                         int rowsAffected = insert.ExecuteNonQuery();
-
-                        if (rowsAffected > 0)
-                        {
-                            // AUTOMATION: Log successful claim submission
-                            Console.WriteLine($"Claim submitted successfully - Email: {Email_Address}, Amount: {Calculated_Amount}, Faculty: {Faculty}");
-                        }
+                        Console.WriteLine($"Claim inserted successfully. Rows affected: {rowsAffected}");
                     }
                 }
             }
             catch (Exception error)
             {
                 Console.WriteLine($"Error storing claim: {error.Message}");
+                Console.WriteLine($"Stack trace: {error.StackTrace}");
                 throw;
             }
         }
@@ -332,6 +341,51 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
         }
 
         // Get claims by user email
+        public List<claim> GetUserClaims(string email)
+        {
+            var claims = new List<claim>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+                    string query = @"SELECT * FROM Claims WHERE Email_Address = @Email ORDER BY SubmittedDate DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connect))
+                    {
+                        cmd.Parameters.AddWithValue("@Email", email);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                claims.Add(new claim
+                                {
+                                    ClaimID = reader.GetInt32(reader.GetOrdinal("claimID")),
+                                    Email_Address = reader.GetString(reader.GetOrdinal("Email_Address")),
+                                    Claim_Date = reader.GetDateTime(reader.GetOrdinal("Claim_Date")),
+                                    Faculty = reader.GetString(reader.GetOrdinal("Faculty")),
+                                    Module = reader.GetString(reader.GetOrdinal("Module")),
+                                    Hours_Worked = reader.GetInt32(reader.GetOrdinal("Hours_Worked")),
+                                    Hourly_Rate = reader.GetDecimal(reader.GetOrdinal("Hourly_Rate")),
+                                    Calculated_Amount = reader.GetDecimal(reader.GetOrdinal("Calculated_Amount")),
+                                    Supporting_Documents = reader.GetString(reader.GetOrdinal("Supporting_Documents")),
+                                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                                    SubmittedDate = reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
+                                    ProcessedDate = reader.IsDBNull(reader.GetOrdinal("ProcessedDate")) ?
+                                        null : reader.GetDateTime(reader.GetOrdinal("ProcessedDate"))
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error getting user claims: {error.Message}");
+            }
+            return claims;
+        }
+
         // AUTOMATION: Add method for claim statistics
         public ClaimStatistics GetClaimStatistics(string email = null)
         {

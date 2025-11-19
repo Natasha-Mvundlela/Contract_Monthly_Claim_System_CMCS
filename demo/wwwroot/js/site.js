@@ -363,6 +363,8 @@ function calculateTotal() {
     document.getElementById('rateDisplay').textContent = 'R ' + rate.toFixed(2);
     document.getElementById('hoursDisplay').textContent = hours.toFixed(1) + ' hours';
     document.getElementById('totalDisplay').textContent = 'R ' + total.toFixed(2);
+
+    console.log(`JavaScript calculation: ${hours} * ${rate} = ${total}`);
 }
 
 // File upload display
@@ -375,7 +377,7 @@ document.getElementById('uploadFile').addEventListener('change', function (e) {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
             fileItem.innerHTML = `
-                <span>📄 ${file.name}</span>
+                <span> ${file.name}</span>
                 <span>(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
             `;
             fileList.appendChild(fileItem);
@@ -386,4 +388,9 @@ document.getElementById('uploadFile').addEventListener('change', function (e) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function () {
     calculateTotal();
+
+    //input listeners for real-time calculation
+    document.getElementById('rate').addEventListener('input', calculateTotal);
+    document.getElementById('hoursWorked').addEventListener('input', calculateTotal);
+
 });
