@@ -864,7 +864,7 @@ footer {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background-color: white;
+    background-color: teal;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     margin-bottom: 0.75rem;
