@@ -48,7 +48,7 @@ The Contract Monthly Claim System (CMCS) is a comprehensive ASP.NET Core MVC web
 - **Report Generation**: Multi-format reporting (CSV, PDF, HTML)
 - **Data Analytics**: Automated statistics and performance tracking
 
-## 📊 System Architecture
+## System Architecture
 
 ### Enhanced Database Schema
 ```sql
@@ -69,7 +69,7 @@ The Contract Monthly Claim System (CMCS) is a comprehensive ASP.NET Core MVC web
 2. **Approval Process** → Automated screening → Priority sorting → Batch processing
 3. **HR Processing** → Report generation → Payment tracking → Analytics
 
-## 🎯 Enhanced Usage Guide
+## Enhanced Usage Guide
 
 ### For Lecturers - Advanced Features
 
@@ -126,7 +126,7 @@ The Contract Monthly Claim System (CMCS) is a comprehensive ASP.NET Core MVC web
    - Bulk payment processing
    - Financial reporting
 
-## 🔧 Enhanced Installation & Setup
+## Enhanced Installation & Setup
 
 ### Advanced Configuration
 ```bash
@@ -158,7 +158,7 @@ dotnet run --environment Production
    }
    ```
 
-## 📈 Performance & Analytics
+## Performance & Analytics
 
 ### Real-time Dashboard Features
 - **Live Statistics**: Updated every 30 seconds
@@ -172,7 +172,7 @@ dotnet run --environment Production
 - **Visual Analytics**: Charts and graphs for data visualization
 - **Trend Analysis**: Historical data comparison and forecasting
 
-## 🔒 Enhanced Security Features
+## Enhanced Security Features
 
 ### Advanced Security Measures
 - **Enhanced Session Management** with automatic timeout
@@ -187,7 +187,7 @@ dotnet run --environment Production
 - **Access Control** with multi-level authorization
 - **Audit Trail** with comprehensive activity logging
 
-## 🧪 Enhanced Testing Suite
+## Enhanced Testing Suite
 
 ### Comprehensive Test Coverage
 ```bash
@@ -211,7 +211,7 @@ dotnet test --filter "Category=Performance"
 4. **Performance Tests** - System load and response testing
 5. **Security Tests** - Vulnerability and penetration testing
 
-## 🐛 Advanced Troubleshooting
+## Advanced Troubleshooting
 
 ### Enhanced Diagnostic Tools
 1. **Real-time Logging**
@@ -235,7 +235,7 @@ dotnet test --filter "Category=Performance"
 - **User Analytics**: Usage patterns and common workflows
 - **Automated Alerts**: Proactive issue detection and notification
 
-## 📚 API Documentation
+## API Documentation
 
 ### Enhanced Endpoints
 ```csharp
@@ -251,7 +251,7 @@ dotnet test --filter "Category=Performance"
 - GET /api/hr/lecturers - Lecturer management
 ```
 
-## 🔄 Version History & Updates
+## Version History & Updates
 
 ### Latest Enhancements
 - **v2.1** - Advanced HR automation and reporting
