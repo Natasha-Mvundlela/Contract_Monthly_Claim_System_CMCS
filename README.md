@@ -4,7 +4,7 @@
 
 The Contract Monthly Claim System (CMCS) is a comprehensive ASP.NET Core MVC web application designed to streamline the monthly claim submission and approval process for contract lecturers. The system provides a secure, efficient, and user-friendly platform for lecturers to submit claims while enabling Programme Coordinators, Academic Managers, and HR personnel to manage the entire workflow effectively.
 
-## 🚀 Enhanced Features & Automation
+## Enhanced Features & Automation
 
 ### Advanced Lecturer Features
 - **Smart Claim Submission** - Real-time auto-calculation with instant validation
@@ -28,7 +28,7 @@ The Contract Monthly Claim System (CMCS) is a comprehensive ASP.NET Core MVC web
 - **Real-time Analytics** - Dashboard with key performance indicators
 - **Data Export** - Comprehensive data export capabilities
 
-## 🛠 Enhanced Technology Stack 
+## Enhanced Technology Stack 
 
 ### Frontend
 - **Framework**: ASP.NET Core MVC with Razor Pages
