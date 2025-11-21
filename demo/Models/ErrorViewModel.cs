@@ -1,4 +1,4 @@
-namespace demo.Models
+namespace Contract_Monthly_Claim_System_CMCS.Models
 {
     public class ErrorViewModel
     {

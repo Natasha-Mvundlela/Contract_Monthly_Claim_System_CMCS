@@ -2,6 +2,7 @@
 
 namespace Contract_Monthly_Claim_System_CMCS.Models
 {
+    // Updated claim model with automation
     public class claim
     {
         public int ClaimID { get; set; }
@@ -29,7 +30,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             set
             {
                 _hoursWorked = value;
-                calculateTotal();
+                CalculateTotal();
             }
         }
 
@@ -42,11 +43,16 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             set
             {
                 _hourlyRate = value;
-                calculateAmount();
+                CalculateTotal();
             }
         }
+
         // AUTO-CALCULATION: Automatically computed based on hours and rate
-        public decimal Calculated_Amount { get; set; } // <-- Change from read-only to settable
+        public decimal Calculated_Amount { get; set; }
+
+        // Automation: Auto-validation status
+        public string AutoValidationStatus { get; set; } = "Pending";
+        public List<string> ValidationMessages { get; set; } = new List<string>();
 
         public string Supporting_Documents { get; set; }
         public string Status { get; set; } = "Pending";
@@ -61,7 +67,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             {
                 return Status switch
                 {
-                    "Pending" => "Awaiting Review",
+                    "Pending" => AutoValidationStatus == "Valid" ? "Awaiting Review" : "Requires Attention",
                     "Approved" => ProcessedDate.HasValue ? "Approved - Awaiting Payment" : "Approved",
                     "Rejected" => "Rejected",
                     _ => Status
@@ -76,7 +82,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             {
                 return Status switch
                 {
-                    "Pending" => 25,
+                    "Pending" => AutoValidationStatus == "Valid" ? 50 : 25,
                     "Approved" => 75,
                     "Rejected" => 100,
                     _ => 0
@@ -84,16 +90,39 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             }
         }
 
-        //  method to auto calculate total amount
-        private void calculateTotal()
+        // Automation: Auto-validation method
+        public void PerformAutoValidation()
         {
-            Calculated_Amount = Hours_Worked * Hourly_Rate;
+            ValidationMessages.Clear();
+
+            // Faculty-based rate validation
+            var rateLimits = new ClaimValidationRules().DepartmentRateLimits;
+            if (rateLimits.ContainsKey(Faculty) && Hourly_Rate > rateLimits[Faculty])
+            {
+                ValidationMessages.Add($"Hourly rate exceeds recommended limit for {Faculty} (Max: R{rateLimits[Faculty]})");
+            }
+
+            // Hours validation
+            if (Hours_Worked > 40)
+            {
+                ValidationMessages.Add("High hours worked - may require additional verification");
+            }
+
+            // Amount validation
+            if (Calculated_Amount > 5000)
+            {
+                ValidationMessages.Add("Large claim amount - will be prioritized for review");
+            }
+
+            // Set validation status
+            AutoValidationStatus = ValidationMessages.Any() ? "Requires Review" : "Valid";
         }
 
-        // calculateAmount to call calculateTotal for consistency
-        private void calculateAmount()
+        // Method to auto calculate total amount
+        private void CalculateTotal()
         {
-            calculateTotal();
+            Calculated_Amount = Hours_Worked * Hourly_Rate;
+            PerformAutoValidation(); // Auto-validate when values change
         }
     }
 }

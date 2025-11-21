@@ -1,0 +1,127 @@
+﻿@model Contract_Monthly_Claim_System_CMCS.Models.HRModel
+@{
+    ViewData["Title"] = "HR Dashboard";
+}
+
+<div class="container">
+    <div class="dashboard-header">
+        <h1>HR Dashboard</h1>
+        <p>Human Resources Management Portal</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <h3>@Model.TotalLecturers</h3>
+                <p>Total Lecturers</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-info">
+                <h3>@Model.ActiveClaims</h3>
+                <p>Active Claims</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+                <h3>R @Model.TotalPaymentsThisMonth.ToString("F2")</h3>
+                <p>This Month</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info">
+                <h3>@Model.ClaimsThisMonth</h3>
+                <p>Claims This Month</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="@Url.Action("PaymentReports", "HR")" class="btn btn-primary">Generate Reports</a>
+            <a href="@Url.Action("LecturerManagement", "HR")" class="btn btn-secondary">Manage Lecturers</a>
+            <a href="@Url.Action("GenerateInvoices", "HR")" class="btn btn-primary">Process Invoices</a>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="recent-section">
+        <h2>Recent Payments</h2>
+        @if (Model.RecentPayments.Any())
+        {
+            <div class="table-container">
+                <table class="claims-table">
+                    <thead>
+                        <tr>
+                            <th>Lecturer</th>
+                            <th>Faculty</th>
+                            <th>Amount</th>
+                            <th>Processed Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var payment in Model.RecentPayments.Take(10))
+                        {
+                            <tr>
+                                <td>@payment.LecturerName</td>
+                                <td>@payment.Faculty</td>
+                                <td>R @payment.Amount.ToString("F2")</td>
+                                <td>@payment.ProcessedDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="status-badge status-approved">@payment.Status</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p>No recent payments found.</p>
+        }
+    </div>
+
+    <!-- Top Lecturers -->
+    <div class="recent-section">
+        <h2>Top Lecturers</h2>
+        @if (Model.LecturerSummaries.Any())
+        {
+            <div class="table-container">
+                <table class="claims-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Faculty</th>
+                            <th>Total Claims</th>
+                            <th>Total Earnings</th>
+                            <th>Last Claim</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var lecturer in Model.LecturerSummaries.Take(5))
+                        {
+                            <tr>
+                                <td>@lecturer.FullName</td>
+                                <td>@lecturer.Faculty</td>
+                                <td>@lecturer.TotalClaims</td>
+                                <td>R @lecturer.TotalEarnings.ToString("F2")</td>
+                                <td>@lecturer.LastClaimDate.ToString("dd MMM yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p>No lecturer data available.</p>
+        }
+    </div>
+</div>

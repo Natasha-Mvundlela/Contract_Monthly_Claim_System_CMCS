@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Session;
 var builder = WebApplication.CreateBuilder(args);
 
+
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -71,8 +73,10 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var queries = scope.ServiceProvider.GetRequiredService<created_queries>();
+        
         queries.InitializeSystem();
         queries.TestConnection();
+        queries.DebugDatabaseContents();
         Console.WriteLine("System initialized successfully on startup");
     }
 }

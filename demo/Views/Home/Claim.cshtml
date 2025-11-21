@@ -10,13 +10,14 @@
     <title>@ViewBag.PageTitle</title>
     <link rel="stylesheet" href="~/css/site.css" />
     <script src="~/js/site.js"></script>
+    <script src="~/js/automation.js"></script>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navigation">
         <h3>Contract Monthly Claim System</h3>
         <div class="nav-links">
-            <a href="@Url.Action("Index", "Home")">Home</a>
+            <a href="@Url.Action("Dashboard", "Home")" class="active">Dashboard</a>
             <a href="@Url.Action("Claim", "Home")" class="active">Claim</a>
             <a href="@Url.Action("Status", "Home")">Status</a>
             <a href="@Url.Action("Index", "Home")">Logout</a>
@@ -67,7 +68,7 @@
                     <li>Allowed file types: PDF, DOCX, XLSX</li>
                 </ul>
             </div>
-            <!-- enctype="multipart/form-data" for file uploads -->
+            <!-- file uploads -->
             <form asp-action="Claim" method="post" id="claimForm" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <div class="form-row">
@@ -81,7 +82,7 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="claimDate">Claim Date</label>
-                            <input type="date" asp-for="Claim_Date" id="claimDate" class="form-control" value="@ViewBag.CurrentDate">
+                            <input type="date" asp-for="Claim_Date" id="claimDate" value="@DateTime.Now.ToString("yyyy-MM-dd")">
                             <span asp-validation-for="Claim_Date" class="text-danger"></span>
                         </div>
                     </div>

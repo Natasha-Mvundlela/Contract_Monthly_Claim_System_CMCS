@@ -1,0 +1,59 @@
+﻿@model Contract_Monthly_Claim_System_CMCS.Models.ReportRequest
+@{
+    ViewData["Title"] = "Payment Reports";
+}
+
+<div class="container">
+    <div class="report-header">
+        <h1>Payment Reports</h1>
+        <p>Generate detailed payment reports and invoices</p>
+    </div>
+
+    <div class="report-form">
+        <form asp-action="GenerateReport" method="post">
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label asp-for="StartDate">Start Date</label>
+                        <input asp-for="StartDate" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label asp-for="EndDate">End Date</label>
+                        <input asp-for="EndDate" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label asp-for="Faculty">Faculty</label>
+                        <select asp-for="Faculty" class="form-control">
+                            <option value="All">All Faculties</option>
+                            <option value="ICT">ICT</option>
+                            <option value="Education">Education</option>
+                            <option value="Law">Law</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Humanities">Humanities</option>
+                            <option value="Finance and Accounting">Finance and Accounting</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label asp-for="ReportType">Report Format</label>
+                        <select asp-for="ReportType" class="form-control">
+                            <option value="PaymentSummary">Summary View</option>
+                            <option value="CSV">CSV Export</option>
+                            <option value="PDF">PDF Report</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Generate Report</button>
+        </form>
+    </div>
+</div>

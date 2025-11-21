@@ -1,3 +1,9 @@
-﻿
+﻿<script src="~/js/automation.js"></script>
+@if (User.IsInRole("admin") || User.IsInRole("hr"))
+{
+    <a href="@Url.Action("Dashboard", "HR")">HR Dashboard</a>
+    <a href="@Url.Action("PaymentReports", "HR")">Reports</a>
+    <a href="@Url.Action("LecturerManagement", "HR")">Lecturers</a>
+}
             @RenderBody()
       

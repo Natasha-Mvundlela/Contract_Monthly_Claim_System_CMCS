@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Contract_Monthly_Claim_System_CMCS.Models;
-using demo.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Contract_Monthly_Claim_System_CMCS.Controllers
@@ -179,111 +178,83 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Claim(claim claims, List<IFormFile> supportingFiles)
+        public IActionResult Claim(claim model, List<IFormFile> supportingFiles)
         {
-            var userEmail = HttpContext.Session.GetString("UserEmail");
-            if (string.IsNullOrEmpty(userEmail))
+            try
             {
-                TempData["ErrorMessage"] = "Please login to submit a claim.";
-                return RedirectToAction("Login");
-            }
-
-            // dropdowns
-            ViewBag.Faculties = new List<string> {
-                "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting"
-            };
-            ViewBag.Modules = new List<string> {
-                "Programming", "Database", "Information Security", "Web Development",
-                "Software Engineering", "Network Fundamentals"
-            };
-            ViewBag.UserEmail = userEmail;
-
-            // Ensure the email is from session
-            claims.Email_Address = userEmail;
-
-            // AUTOMATION: Auto-calculate amount before validation
-            if (claims.Hours_Worked > 0 && claims.Hourly_Rate > 0)
-            {
-                // This will use the auto-calculated property
-                _logger.LogInformation("Auto-calculated amount: {Hours} * {Rate} = {Amount}",
-                    claims.Hours_Worked, claims.Hourly_Rate, claims.Calculated_Amount);
-            }
-
-            if (ModelState.IsValid)
-            {
-                // AUTOMATION: Enhanced validation
-                var validationResult = ValidateClaim(claims);
-                if (!validationResult.IsValid)
+                if (ModelState.IsValid)
                 {
-                    foreach (var error in validationResult.Errors)
+                    var userEmail = SessionHelper.GetUserEmail(HttpContext);
+                    if (string.IsNullOrEmpty(userEmail))
                     {
-                        ModelState.AddModelError("", error);
+                        TempData["ErrorMessage"] = "Please login to submit a claim.";
+                        return RedirectToAction("Login");
                     }
-                    return View(claims);
-                }
 
-                try
-                {
-                    // Handle file upload
-                    var uploadedFileNames = new List<string>();
+                    model.Email_Address = userEmail;
 
+                    // Auto-calculation (already done in model properties)
+                    Console.WriteLine($"Auto-calculated amount: {model.Hours_Worked} * {model.Hourly_Rate} = {model.Calculated_Amount}");
+
+                    // Perform auto-validation
+                    var validator = new ClaimValidationRules();
+                    var validationResult = validator.ValidateClaim(model);
+
+                    // Store validation messages
+                    if (validationResult.Warnings.Any())
+                    {
+                        TempData["ValidationWarnings"] = string.Join("; ", validationResult.Warnings);
+                    }
+
+                    // Handle file uploads
+                    var fileNames = new List<string>();
                     if (supportingFiles != null && supportingFiles.Count > 0)
                     {
                         foreach (var file in supportingFiles)
                         {
-                            if (file.Length > 0 && file.Length < 5 * 1024 * 1024) // 5MB limit
+                            if (file.Length > 0 && file.Length <= 5 * 1024 * 1024)
                             {
                                 var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
-                                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-
-                                if (!Directory.Exists(uploadsFolder))
-                                {
-                                    Directory.CreateDirectory(uploadsFolder);
-                                }
-
-                                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                                using (var stream = new FileStream(filePath, FileMode.Create))
-                                {
-                                    file.CopyTo(stream);
-                                }
-                                uploadedFileNames.Add(fileName);
+                                fileNames.Add(fileName);
                             }
                         }
                     }
 
-                    claims.Supporting_Documents = uploadedFileNames.Any() ?
-                        string.Join(",", uploadedFileNames) : "No documents";
-
-                    // Save claim to database
-                    created_queries saveClaim = new created_queries();
-                    saveClaim.store_claim(
-                        claims.Email_Address,
-                        claims.Claim_Date,
-                        claims.Faculty,
-                        claims.Module,
-                        claims.Hours_Worked,
-                        claims.Hourly_Rate,
-                        claims.Calculated_Amount, // Using auto-calculated value
-                        claims.Supporting_Documents
+                    // Store claim
+                    created_queries queries = new created_queries();
+                    queries.store_claim(
+                        model.Email_Address,
+                        model.Claim_Date,
+                        model.Faculty,
+                        model.Module,
+                        model.Hours_Worked,
+                        model.Hourly_Rate,
+                        model.Calculated_Amount,
+                        string.Join(";", fileNames)
                     );
 
-                    // AUTOMATION: Log successful submission with details
-                    _logger.LogInformation("Claim submitted successfully - User: {User}, Amount: {Amount}, Faculty: {Faculty}",
-                        userEmail, claims.Calculated_Amount, claims.Faculty);
+                    TempData["SuccessMessage"] = "Claim submitted successfully! Automated validation completed.";
 
-                    TempData["SuccessMessage"] = "Claim submitted successfully! It is now pending approval.";
-                    return RedirectToAction("Dashboard");
+                    if (validationResult.Warnings.Any())
+                    {
+                        TempData["InfoMessage"] = "Note: " + string.Join(" ", validationResult.Warnings);
+                    }
+
+                    return RedirectToAction("Status");
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error submitting claim for user {UserEmail}", userEmail);
-                    ModelState.AddModelError("", $"An error occurred while submitting your claim: {ex.Message}");
-                }
+
+                ViewBag.Faculties = GetFaculties();
+                ViewBag.Modules = GetModules();
+                return View(model);
             }
-
-            return View(claims);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Claim submission error: {ex.Message}");
+                TempData["ErrorMessage"] = $"Error submitting claim: {ex.Message}";
+                ViewBag.Faculties = GetFaculties();
+                ViewBag.Modules = GetModules();
+                return View(model);
+            }
         }
 
         [HttpGet]
@@ -331,28 +302,30 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult RejectClaim(int claimId, string reason)
+        public IActionResult RejectClaim(int claimId, string reason, string processedBy)
         {
-            try
-            {
-                var processedBy = HttpContext.Session.GetString("UserEmail") ?? "System";
-                created_queries reject = new created_queries();
-                bool success = reject.RejectClaim(claimId, reason, processedBy);
+            var userEmail = SessionHelper.GetUserEmail(HttpContext);
+            var userRole = SessionHelper.GetUserRole(HttpContext);
 
-                if (success)
-                {
-                    TempData["SuccessMessage"] = "Claim rejected successfully!";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to reject claim. Please try again.";
-                }
-            }
-            catch (Exception ex)
+
+            
+
+            if (userRole != "pc" && userRole != "admin")
             {
-                TempData["ErrorMessage"] = "An error occurred while rejecting the claim.";
-                _logger.LogError(ex, "Error rejecting claim");
+                TempData["ErrorMessage"] = "Access denied.";
+                return RedirectToAction("Dashboard");
             }
+             created_queries reject = new created_queries();
+                var result = reject.RejectClaim(claimId, reason, processedBy);
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Claim rejected successfully!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to reject claim.";
+            }
+
             return RedirectToAction("Approval");
         }
 
@@ -391,48 +364,121 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
 
             return result;
         }
-
         [HttpGet]
         public IActionResult Dashboard()
         {
-            var userEmail = HttpContext.Session.GetString("UserEmail");
-            var userRole = HttpContext.Session.GetString("UserRole");
+            try
+            {
+                var userEmail = SessionHelper.GetUserEmail(HttpContext);
+                var userRole = SessionHelper.GetUserRole(HttpContext);
 
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    TempData["ErrorMessage"] = "Please login to access the dashboard.";
+                    return RedirectToAction("Login");
+                }
+
+                Console.WriteLine($"Dashboard: Loading data for user {userEmail}");
+
+                // Get user claims
+                created_queries query = new created_queries();
+                var userClaims = query.GetUserClaims(userEmail);
+                Console.WriteLine($"Dashboard: Retrieved {userClaims.Count} claims");
+
+                // Get statistics
+                created_queries queries = new created_queries();
+                var statistics = queries.GetClaimStatistics(userEmail);
+                Console.WriteLine($"Dashboard Stats - Total: {statistics.TotalClaims}, Pending: {statistics.PendingClaims}, Approved: {statistics.ApprovedClaims}, Amount: R{statistics.TotalApprovedAmount}");
+                // Pass data to view
+                ViewBag.TotalClaims = statistics.TotalClaims;
+                ViewBag.PendingClaims = statistics.PendingClaims;
+                ViewBag.ApprovedClaims = statistics.ApprovedClaims;
+                ViewBag.TotalApprovedAmount = statistics.TotalApprovedAmount;
+                ViewBag.AverageApprovedAmount = statistics.AverageApprovedAmount;
+
+                // Get recent claims (last 5)
+                ViewBag.RecentClaims = userClaims.Take(5).ToList();
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Dashboard error: {ex.Message}");
+                TempData["ErrorMessage"] = "Error loading dashboard data.";
+                return View();
+            }
+        }
+
+        [HttpGet]
+        public IActionResult TestDataRetrieval()
+        {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail))
             {
-                return RedirectToAction("Login");
+                return Content("Not logged in");
             }
 
-            // Get claims for the dashboard
-            created_queries queries = new created_queries();
-            var userClaims = queries.GetUserClaims(userEmail);
+            try
+            {
+                created_queries queries = new created_queries();
+                var userClaims = queries.GetUserClaims(userEmail);
 
-            ViewBag.RecentClaims = userClaims.Take(5).ToList();
-            ViewBag.TotalClaims = userClaims.Count;
-            ViewBag.PendingClaims = userClaims.Count(c => c.Status == "Pending");
-            ViewBag.ApprovedClaims = userClaims.Count(c => c.Status == "Approved");
+                var result = $"User: {userEmail}\n";
+                result += $"Total Claims: {userClaims.Count}\n";
+                result += "All Claims:\n";
 
-            // Calculate total approved amount
-            var totalApproved = userClaims
-                .Where(c => c.Status == "Approved")
-                .Sum(c => c.Calculated_Amount);
-            ViewBag.TotalApprovedAmount = totalApproved;
+                foreach (var claim in userClaims)
+                {
+                    result += $"- ID: {claim.ClaimID}, Module: {claim.Module}, Status: {claim.Status}, Amount: R{claim.Calculated_Amount:F2}\n";
+                }
 
-            return View();
+                return Content(result);
+            }
+            catch (Exception ex)
+            {
+                return Content($"Error: {ex.Message}\n\n{ex.StackTrace}");
+            }
+        }
+
+        [HttpGet]
+        public IActionResult TestSession()
+        {
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            var userRole = HttpContext.Session.GetString("UserRole");
+            var isAuthenticated = HttpContext.Session.GetString("IsAuthenticated");
+
+            return Content($"Session Data:\nEmail: {userEmail}\nRole: {userRole}\nAuthenticated: {isAuthenticated}");
         }
 
         [HttpGet]
         public IActionResult Status()
         {
-            var userEmail = HttpContext.Session.GetString("UserEmail");
-            if (string.IsNullOrEmpty(userEmail))
+            try
             {
-                return RedirectToAction("Login"); 
-            }
+                var userEmail = SessionHelper.GetUserEmail(HttpContext);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    TempData["ErrorMessage"] = "Please login to view your claims.";
+                    return RedirectToAction("Login");
+                }
 
-            created_queries queries = new created_queries();
-            var userClaims = queries.GetUserClaims(userEmail);
-            return View(userClaims);
+                Console.WriteLine($"Status: Loading claims for user {userEmail}");
+
+                created_queries queries = new created_queries();
+                var claims = queries.GetUserClaims(userEmail);
+                Console.WriteLine($"Status: Retrieved {claims.Count} claims");
+
+                // Debug: Check what's in the database
+                queries.DebugDatabaseContents();
+
+                return View(claims);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Status error: {ex.Message}");
+                TempData["ErrorMessage"] = "Error loading your claims.";
+                return View(new List<claim>());
+            }
         }
 
         [HttpGet]
@@ -456,6 +502,31 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             return View(pendingClaims);
         }
 
+        [HttpPost]
+        public IActionResult ApprovedClaim(int claimId)
+        {
+            var userEmail = SessionHelper.GetUserEmail(HttpContext);
+            var userRole = SessionHelper.GetUserRole(HttpContext);
+
+            if (userRole != "pc" && userRole != "admin")
+            {
+                TempData["ErrorMessage"] = "Access denied.";
+                return RedirectToAction("Dashboard");
+            }
+            created_queries queries = new created_queries();
+            var result = queries.ApproveClaim(claimId, userEmail);
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Claim approved successfully!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to approve claim.";
+            }
+
+            return RedirectToAction("Approval");
+        }
+
         // AUTOMATION: Provide validation insights for coordinators
         private string GetValidationInsight(claim claim)
         {
@@ -477,6 +548,21 @@ namespace Contract_Monthly_Claim_System_CMCS.Controllers
             }
 
             return insights.Any() ? string.Join("; ", insights) : "Meets standard criteria";
+        }
+
+        private List<string> GetFaculties()
+        {
+            return new List<string> {
+                "ICT", "Education", "Law", "Commerce", "Humanities", "Finance and Accounting"
+            };
+        }
+
+        private List<string> GetModules()
+        {
+            return new List<string> {
+                "Programming", "Database", "Information Security", "Web Development",
+                "Software Engineering", "Network Fundamentals"
+            };
         }
     }
 }

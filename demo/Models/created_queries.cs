@@ -135,6 +135,54 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
             Console.WriteLine($" Database '{databaseName}' verified or created.");
         }
 
+        public void DebugDatabaseContents()
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+
+                    // Check if Claims table exists and has data
+                    string checkQuery = @"
+                SELECT 
+                    TABLE_NAME,
+                    (SELECT COUNT(*) FROM Claims) as ClaimCount,
+                    (SELECT COUNT(*) FROM Users) as UserCount
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_NAME IN ('Claims', 'Users')";
+
+                    using (SqlCommand cmd = new SqlCommand(checkQuery, connect))
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Console.WriteLine($"Table: {reader["TABLE_NAME"]}");
+                        }
+                    }
+
+                    // Check recent claims
+                    string recentClaimsQuery = @"
+                SELECT TOP 5 claimID, Email_Address, Status, SubmittedDate 
+                FROM Claims 
+                ORDER BY SubmittedDate DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(recentClaimsQuery, connect))
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        Console.WriteLine("Recent claims in database:");
+                        while (reader.Read())
+                        {
+                            Console.WriteLine($"ClaimID: {reader["claimID"]}, Email: {reader["Email_Address"]}, Status: {reader["Status"]}, Date: {reader["SubmittedDate"]}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Debug error: {ex.Message}");
+            }
+        }
 
         // CreateTables method
         private void CreateTables()
@@ -329,19 +377,20 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                                 Status = reader.GetString(reader.GetOrdinal("Status")),
                                 SubmittedDate = reader.GetDateTime(reader.GetOrdinal("SubmittedDate"))
                             });
-                        }
                     }
                 }
             }
-            catch (Exception error)
-            {
-                Console.WriteLine($"Error getting pending claims: {error.Message}");
-            }
-            return claims;
+        Console.WriteLine($"Retrieved {claims.Count} pending claims for approval");
         }
+    catch (Exception error)
+    {
+        Console.WriteLine($"Error getting pending claims: {error.Message}");
+    }
+    return claims;
+}
 
-        // Get claims by user email
-        public List<claim> GetUserClaims(string email)
+// Get claims by user email
+public List<claim> GetUserClaims(string email)
         {
             var claims = new List<claim>();
             try
@@ -349,7 +398,24 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
                 {
                     connect.Open();
-                    string query = @"SELECT * FROM Claims WHERE Email_Address = @Email ORDER BY SubmittedDate DESC";
+                    string query = @" SELECT 
+                                    claimID, 
+                                    Email_Address, 
+                                    Claim_Date, 
+                                    Faculty, 
+                                    Module, 
+                                    Hours_Worked, 
+                                    Hourly_Rate, 
+                                    Calculated_Amount, 
+                                    Supporting_Documents, 
+                                    Status, 
+                                    SubmittedDate,
+                                    ProcessedDate,
+                                    ProcessedBy,
+                                    RejectionReason
+                                FROM Claims 
+                                WHERE Email_Address = @Email 
+                                ORDER BY SubmittedDate DESC";
 
                     using (SqlCommand cmd = new SqlCommand(query, connect))
                     {
@@ -358,7 +424,7 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                         {
                             while (reader.Read())
                             {
-                                claims.Add(new claim
+                                var claim = new claim
                                 {
                                     ClaimID = reader.GetInt32(reader.GetOrdinal("claimID")),
                                     Email_Address = reader.GetString(reader.GetOrdinal("Email_Address")),
@@ -372,12 +438,16 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                                     Status = reader.GetString(reader.GetOrdinal("Status")),
                                     SubmittedDate = reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
                                     ProcessedDate = reader.IsDBNull(reader.GetOrdinal("ProcessedDate")) ?
-                                        null : reader.GetDateTime(reader.GetOrdinal("ProcessedDate"))
-                                });
+                                        (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ProcessedDate")),
+                                    ProcessedBy = reader.IsDBNull(reader.GetOrdinal("ProcessedBy")) ?
+                                        null : reader.GetString(reader.GetOrdinal("ProcessedBy"))
+                                };
+                                claims.Add(claim);
                             }
                         }
                     }
                 }
+                Console.WriteLine($"Retrieved {claims.Count} claims for user {email}");
             }
             catch (Exception error)
             {
@@ -421,7 +491,6 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                                 statistics.TotalClaims = reader.GetInt32(reader.GetOrdinal("TotalClaims"));
                                 statistics.PendingClaims = reader.GetInt32(reader.GetOrdinal("PendingClaims"));
                                 statistics.ApprovedClaims = reader.GetInt32(reader.GetOrdinal("ApprovedClaims"));
-                                statistics.RejectedClaims = reader.GetInt32(reader.GetOrdinal("RejectedClaims"));
                                 statistics.TotalApprovedAmount = reader.IsDBNull(reader.GetOrdinal("TotalApprovedAmount")) ? 
                                     0 : reader.GetDecimal(reader.GetOrdinal("TotalApprovedAmount"));
                                 statistics.AverageApprovedAmount = reader.IsDBNull(reader.GetOrdinal("AverageApprovedAmount")) ? 
@@ -494,6 +563,197 @@ namespace Contract_Monthly_Claim_System_CMCS.Models
                 return false;
             }
         }
+        public List<PaymentReport> GetApprovedClaimsForPayment(DateTime? startDate = null, DateTime? endDate = null)
+        {
+            var payments = new List<PaymentReport>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+
+                    string query = @"
+                    SELECT 
+                        c.claimID, c.Email_Address, c.Faculty, c.Module,
+                        c.Hours_Worked, c.Hourly_Rate, c.Calculated_Amount,
+                        c.Claim_Date, c.ProcessedDate, u.Full_Name
+                    FROM Claims c
+                    LEFT JOIN Users u ON c.Email_Address = u.Email_address
+                    WHERE c.Status = 'Approved'
+                    AND (@StartDate IS NULL OR c.ProcessedDate >= @StartDate)
+                    AND (@EndDate IS NULL OR c.ProcessedDate <= @EndDate)
+                    ORDER BY c.ProcessedDate DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connect))
+                    {
+                        cmd.Parameters.AddWithValue("@StartDate", startDate ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@EndDate", endDate ?? (object)DBNull.Value);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                payments.Add(new PaymentReport
+                                {
+                                    LecturerEmail = reader.GetString(reader.GetOrdinal("Email_Address")),
+                                    LecturerName = reader.IsDBNull(reader.GetOrdinal("Full_Name")) ?
+                                        "Unknown" : reader.GetString(reader.GetOrdinal("Full_Name")),
+                                    Faculty = reader.GetString(reader.GetOrdinal("Faculty")),
+                                    Amount = reader.GetDecimal(reader.GetOrdinal("Calculated_Amount")),
+                                    ClaimDate = reader.GetDateTime(reader.GetOrdinal("Claim_Date")),
+                                    ProcessedDate = reader.GetDateTime(reader.GetOrdinal("ProcessedDate")),
+                                    Status = "Approved"
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error getting approved claims: {error.Message}");
+            }
+            return payments;
+        }
+
+        // HR: Get lecturer summaries
+        public List<LecturerSummary> GetLecturerSummaries()
+        {
+            var summaries = new List<LecturerSummary>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+
+                    string query = @"
+                    SELECT 
+                        u.Email_address,
+                        u.Full_Name,
+                        u.Faculty,
+                        COUNT(c.claimID) as TotalClaims,
+                        SUM(CASE WHEN c.Status = 'Approved' THEN c.Calculated_Amount ELSE 0 END) as TotalEarnings,
+                        MAX(c.SubmittedDate) as LastClaimDate
+                    FROM Users u
+                    LEFT JOIN Claims c ON u.Email_address = c.Email_Address
+                    WHERE u.Role = 'lecturer'
+                    GROUP BY u.Email_address, u.Full_Name, u.Faculty
+                    ORDER BY TotalEarnings DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connect))
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            summaries.Add(new LecturerSummary
+                            {
+                                Email = reader.GetString(reader.GetOrdinal("Email_address")),
+                                FullName = reader.GetString(reader.GetOrdinal("Full_Name")),
+                                Faculty = reader.GetString(reader.GetOrdinal("Faculty")),
+                                TotalClaims = reader.GetInt32(reader.GetOrdinal("TotalClaims")),
+                                TotalEarnings = reader.GetDecimal(reader.GetOrdinal("TotalEarnings")),
+                                LastClaimDate = reader.IsDBNull(reader.GetOrdinal("LastClaimDate")) ?
+                                    DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("LastClaimDate"))
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error getting lecturer summaries: {error.Message}");
+            }
+            return summaries;
+        }
+
+        // HR: Generate payment report
+        public List<PaymentReport> GeneratePaymentReport(DateTime startDate, DateTime endDate, string faculty = "All")
+        {
+            var report = new List<PaymentReport>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+
+                    string query = @"
+                    SELECT 
+                        c.Email_Address, u.Full_Name, c.Faculty, c.Module,
+                        c.Hours_Worked, c.Hourly_Rate, c.Calculated_Amount,
+                        c.Claim_Date, c.ProcessedDate, c.Status
+                    FROM Claims c
+                    LEFT JOIN Users u ON c.Email_Address = u.Email_address
+                    WHERE c.ProcessedDate BETWEEN @StartDate AND @EndDate
+                    AND (@Faculty = 'All' OR c.Faculty = @Faculty)
+                    AND c.Status IN ('Approved', 'Rejected')
+                    ORDER BY c.ProcessedDate DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connect))
+                    {
+                        cmd.Parameters.AddWithValue("@StartDate", startDate);
+                        cmd.Parameters.AddWithValue("@EndDate", endDate);
+                        cmd.Parameters.AddWithValue("@Faculty", faculty);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                report.Add(new PaymentReport
+                                {
+                                    LecturerEmail = reader.GetString(reader.GetOrdinal("Email_Address")),
+                                    LecturerName = reader.IsDBNull(reader.GetOrdinal("Full_Name")) ?
+                                        "Unknown" : reader.GetString(reader.GetOrdinal("Full_Name")),
+                                    Faculty = reader.GetString(reader.GetOrdinal("Faculty")),
+                                    Amount = reader.GetDecimal(reader.GetOrdinal("Calculated_Amount")),
+                                    ClaimDate = reader.GetDateTime(reader.GetOrdinal("Claim_Date")),
+                                    ProcessedDate = reader.GetDateTime(reader.GetOrdinal("ProcessedDate")),
+                                    Status = reader.GetString(reader.GetOrdinal("Status"))
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error generating payment report: {error.Message}");
+            }
+            return report;
+        }
+
+        // HR: Update lecturer information
+        public bool UpdateLecturerInfo(string email, string fullName, string faculty, string contactInfo)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connectionStringToDatabase))
+                {
+                    connect.Open();
+
+                    string query = @"
+                    UPDATE Users 
+                    SET Full_Name = @FullName, Faculty = @Faculty, Contact_Info = @ContactInfo
+                    WHERE Email_address = @Email AND Role = 'lecturer'";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connect))
+                    {
+                        cmd.Parameters.AddWithValue("@Email", email);
+                        cmd.Parameters.AddWithValue("@FullName", fullName);
+                        cmd.Parameters.AddWithValue("@Faculty", faculty);
+                        cmd.Parameters.AddWithValue("@ContactInfo", contactInfo ?? "");
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error updating lecturer info: {error.Message}");
+                return false;
+            }
+        }
     }
 }
+
 

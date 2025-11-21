@@ -789,7 +789,7 @@ footer {
 
 .stat-card {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-    color: white;
+    color: teal;
     padding: 1.5rem;
     border-radius: 8px;
     text-align: center;
@@ -1296,4 +1296,217 @@ footer {
     .file-info {
         width: 100%;
     }
+}
+/* Automation-specific styles */
+.calculation-feedback {
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+    .calculation-feedback.warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+    }
+
+    .calculation-feedback.info {
+        background-color: #d1edff;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+    }
+
+    .calculation-feedback.success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+
+.rate-suggestion {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.automation-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    color: white;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notification-success {
+    background-color: var(--success);
+}
+
+.notification-error {
+    background-color: var(--error);
+}
+
+.notification-info {
+    background-color: var(--primary-color);
+}
+
+.notification-warning {
+    background-color: var(--warning);
+}
+
+.automation-notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-left: 1rem;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Enhanced file upload styles */
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid var(--primary-color);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-icon {
+    font-size: 1.2rem;
+}
+
+.file-name {
+    font-weight: 500;
+}
+
+.file-size {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.file-remove {
+    background: none;
+    border: none;
+    color: var(--error);
+    cursor: pointer;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+}
+
+    .file-remove:hover {
+        background: var(--error);
+        color: white;
+    }
+
+/* Validation styles */
+.is-invalid {
+    border-color: var(--error) !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--error);
+}
+/* HR Dashboard Styles */
+.hr-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.recent-section {
+    background: var(--surface);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.report-form {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.invoice-card {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoice-items {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .invoice-items th,
+    .invoice-items td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+    }
+
+.invoice-total {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary-dark);
+    text-align: right;
+    margin-top: 1rem;
 }

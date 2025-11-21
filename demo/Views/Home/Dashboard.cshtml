@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Contract Monthly Claim System</title>
     <link rel="stylesheet" href="~/css/site.css" />
+    <script src="~/js/automation.js"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -17,7 +18,7 @@
         <div class="nav-links">
             <a href="@Url.Action("Dashboard", "Home")" class="active">Dashboard</a>
             <a href="@Url.Action("Claim", "Home")">Claim</a>
-            <a href="@Url.Action("Status", "Home")">Claim Status</a>
+            <a href="@Url.Action("Status", "Home")">Status</a>
             <a href="@Url.Action("Logout", "Home")">Logout</a>
         </div>
     </nav>
@@ -36,36 +37,29 @@
                     @TempData["SuccessMessage"]
                 </div>
             }
-
+         @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-error">
+                            @TempData["ErrorMessage"]
+                        </div>
+            }
             <!-- Statistics Cards -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-info">
-                        <h3>@ViewBag.TotalClaims</h3>
+                        <h3 id="total-claims">@(ViewBag.TotalClaims ?? 0)</h3>
                         <p>Total Claims</p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-info">
-                        <h3>@ViewBag.PendingClaims</h3>
+                        <h3 id="pending-claims">@(ViewBag.PendingClaims ?? 0)</h3>
                         <p>Pending</p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-info">
-                        <h3>@ViewBag.ApprovedClaims</h3>
-                        <p>Approved</p>
-                    </div>
-                </div>
-                <!-- Approved section -->
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <h3>
-                            R @{
-                            var totalApproved = ViewBag.TotalApprovedAmount ?? 0m;
-                                                        }
-                            @totalApproved.ToString("F2")
-                        </h3>
+                        <h3 id="total-approved">R @((ViewBag.TotalApprovedAmount ?? 0).ToString("F2"))</h3>
                         <p>Total Approved</p>
                     </div>
                 </div>
